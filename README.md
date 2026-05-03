@@ -1,16 +1,18 @@
 <p align="center">
-  <img src="assets/jellyfish.svg" alt="jellyfin-mcp jellyfish" width="180" />
+  <img src="assets/jellyfin-mcp-banner.jpg" alt="jellyfin-mcp banner" />
 </p>
 
 <h1 align="center">jellyfin-mcp</h1>
 
 <p align="center"><em>Speak to your Jellyfin server in tool calls.</em></p>
 
-[![GitHub release](https://img.shields.io/github/v/release/solomonneas/jellyfin-mcp?label=release&color=blue)](https://github.com/solomonneas/jellyfin-mcp/releases/latest)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?logo=typescript)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-20%2B-green?logo=node.js)](https://nodejs.org/)
-[![MCP](https://img.shields.io/badge/MCP-1.x-purple)](https://modelcontextprotocol.io/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+<p align="center">
+  <img src="https://img.shields.io/github/v/release/solomonneas/jellyfin-mcp?label=release&color=2563EB&style=for-the-badge" alt="GitHub release" />
+  <img src="https://img.shields.io/badge/TypeScript-5.7-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript 5.7" />
+  <img src="https://img.shields.io/badge/Node.js-20%2B-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js 20+" />
+  <img src="https://img.shields.io/badge/MCP-1.x-7C3AED?style=for-the-badge" alt="MCP 1.x" />
+  <img src="https://img.shields.io/badge/License-MIT-2EA043?style=for-the-badge" alt="MIT License" />
+</p>
 
 An MCP (Model Context Protocol) server for [Jellyfin](https://jellyfin.org). Exposes Jellyfin's management and playback control surface to LLMs — list who's watching what, pause a session, scan a library, run a scheduled task, or message a client, all as typed tool calls.
 
