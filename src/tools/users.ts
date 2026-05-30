@@ -53,7 +53,8 @@ export function registerUserTools(server: McpServer, client: JellyfinClient): vo
     {
       userId: z.string().describe("User ID from jellyfin_list_users"),
       confirm: z
-        .literal(true)
+        .boolean()
+        .optional()
         .describe("Must be true. Required acknowledgement that the account will be permanently deleted."),
     },
     async ({ userId, confirm }) => {
@@ -93,7 +94,8 @@ export function registerUserTools(server: McpServer, client: JellyfinClient): vo
       userId: z.string().describe("User ID from jellyfin_list_users"),
       newPassword: z.string().min(1).describe("The new password in plaintext (Jellyfin hashes server-side)"),
       confirm: z
-        .literal(true)
+        .boolean()
+        .optional()
         .describe("Must be true. Required acknowledgement that the existing password will be replaced."),
     },
     async ({ userId, newPassword, confirm }) => {

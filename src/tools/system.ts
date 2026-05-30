@@ -32,7 +32,8 @@ export function registerSystemTools(server: McpServer, client: JellyfinClient): 
     "Restart the Jellyfin server process. Destructive: active playback sessions disconnect. Requires confirm: true.",
     {
       confirm: z
-        .literal(true)
+        .boolean()
+        .optional()
         .describe("Must be true. Required acknowledgement that active sessions will disconnect."),
     },
     async ({ confirm }) => {
@@ -51,7 +52,8 @@ export function registerSystemTools(server: McpServer, client: JellyfinClient): 
     "Shut down the Jellyfin server. Destructive: server stays down until something restarts it manually. Requires confirm: true.",
     {
       confirm: z
-        .literal(true)
+        .boolean()
+        .optional()
         .describe("Must be true. Required acknowledgement that the server will not come back on its own."),
     },
     async ({ confirm }) => {

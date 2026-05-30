@@ -8,21 +8,21 @@
 
 <p align="center">
   <img src="https://img.shields.io/github/v/release/solomonneas/jellyfin-mcp?label=release&color=2563EB&style=for-the-badge" alt="GitHub release" />
-  <img src="https://img.shields.io/badge/TypeScript-5.7-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript 5.7" />
+  <img src="https://img.shields.io/badge/TypeScript-6.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript 6.0" />
   <img src="https://img.shields.io/badge/Node.js-20%2B-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js 20+" />
   <img src="https://img.shields.io/badge/MCP-1.x-7C3AED?style=for-the-badge" alt="MCP 1.x" />
   <img src="https://img.shields.io/badge/License-MIT-2EA043?style=for-the-badge" alt="MIT License" />
 </p>
 
-An MCP (Model Context Protocol) server for [Jellyfin](https://jellyfin.org). Exposes Jellyfin's management and playback control surface to LLMs — list who's watching what, pause a session, scan a library, run a scheduled task, or message a client, all as typed tool calls.
+An MCP (Model Context Protocol) server for [Jellyfin](https://jellyfin.org). Exposes Jellyfin's management and playback control surface to LLMs: list who's watching what, pause a session, scan a library, run a scheduled task, or message a client, all as typed tool calls.
 
 Companion to [arr-cli](https://github.com/solomonneas/arr-cli) (the *arr stack CLI). arr-cli handles acquiring content; jellyfin-mcp handles serving, monitoring, and controlling playback.
 
 ## Features
 
-- **41 MCP tools** covering system info, libraries, users, sessions, items, scheduled tasks, user data writes, playlists, collections, discovery, and Quick Connect
+- **47 MCP tools** covering system info, libraries, users, sessions, items, scheduled tasks, user data writes, playlists, collections, discovery, and Quick Connect
 - Playback control: pause / resume / stop / seek / next / previous / volume / mute / audio-stream / subtitle-stream / cast (remote-play) / send-message
-- User data writes: mark watched/unwatched, add/remove favorites
+- User data writes: mark watched/unwatched, add/remove favorites, clear Continue Watching resume positions
 - Playlists: create, list, append, remove entries
 - Collections: create, add, remove
 - Discovery: resume queue, next-up episodes, similar items
@@ -30,47 +30,48 @@ Companion to [arr-cli](https://github.com/solomonneas/arr-cli) (the *arr stack C
 - Library scan triggering (per-library or all)
 - User admin: list, create, delete, enable/disable, reset password
 - Activity log queries for recent events
-- Destructive / privileged ops (`restart`, `shutdown`, `delete_user`, `set_user_password`, `quick_connect_authorize`) require explicit `confirm: true`
+- Destructive / privileged ops (`restart`, `shutdown`, `delete_user`, `set_user_password`, `quick_connect_authorize`, `jellyfin_clear_continue_watching`) require explicit `confirm: true`
 - Works with Claude Desktop, Claude Code, OpenClaw, Hermes Agent, Codex CLI, and any MCP-compatible client
 
 ## Tools
 
 ### System
-- `jellyfin_get_status` — server name, version, OS, pending restart, update availability
-- `jellyfin_restart_server` — restart the Jellyfin process *(requires `confirm: true`)*
-- `jellyfin_shutdown_server` — stop the Jellyfin process *(requires `confirm: true`)*
+- `jellyfin_get_status` - server name, version, OS, pending restart, update availability
+- `jellyfin_restart_server` - restart the Jellyfin process *(requires `confirm: true`)*
+- `jellyfin_shutdown_server` - stop the Jellyfin process *(requires `confirm: true`)*
 
 ### Libraries
-- `jellyfin_list_libraries` — all virtual folders with IDs, collection types, paths
-- `jellyfin_scan_library` — trigger scan for one library or all
+- `jellyfin_list_libraries` - all virtual folders with IDs, collection types, paths
+- `jellyfin_scan_library` - trigger scan for one library or all
 
 ### Users
-- `jellyfin_list_users` — with admin / disabled flags and last login timestamps
+- `jellyfin_list_users` - with admin / disabled flags and last login timestamps
 - `jellyfin_create_user`
 - `jellyfin_delete_user` *(requires `confirm: true`)*
 - `jellyfin_set_user_disabled`
 - `jellyfin_set_user_password` *(requires `confirm: true`)*
 
 ### Sessions & Playback
-- `jellyfin_list_sessions` — active/idle clients with now-playing, progress, paused state
+- `jellyfin_list_sessions` - active/idle clients with now-playing, progress, paused state
 - `jellyfin_pause_session`
 - `jellyfin_resume_session`
 - `jellyfin_stop_session`
-- `jellyfin_send_message_to_session` — toast/dialog on the client
-- `jellyfin_seek_session` — jump to a position in seconds
+- `jellyfin_send_message_to_session` - toast/dialog on the client
+- `jellyfin_seek_session` - jump to a position in seconds
 - `jellyfin_next_track` / `jellyfin_previous_track`
-- `jellyfin_set_volume` (0–100) / `jellyfin_set_mute` (mute/unmute/toggle)
+- `jellyfin_set_volume` (0-100) / `jellyfin_set_mute` (mute/unmute/toggle)
 - `jellyfin_set_audio_stream` / `jellyfin_set_subtitle_stream` (use -1 to disable subtitles)
-- `jellyfin_play_on_session` — cast/remote-play one or more items to a session (PlayNow / PlayNext / PlayLast)
+- `jellyfin_play_on_session` - cast/remote-play one or more items to a session (PlayNow / PlayNext / PlayLast)
 
 ### User Data
 - `jellyfin_mark_played` / `jellyfin_mark_unplayed`
 - `jellyfin_set_favorite` / `jellyfin_unset_favorite`
+- `jellyfin_clear_continue_watching` - clear resume positions for selected items or the whole Continue Watching queue *(requires `confirm: true`)*
 
 ### Playlists
 - `jellyfin_list_playlists`
 - `jellyfin_create_playlist`
-- `jellyfin_get_playlist_items` — returns `playlistEntryId` (use this for removal, not the raw item ID)
+- `jellyfin_get_playlist_items` - returns `playlistEntryId` (use this for removal, not the raw item ID)
 - `jellyfin_add_to_playlist`
 - `jellyfin_remove_from_playlist`
 
@@ -80,18 +81,18 @@ Companion to [arr-cli](https://github.com/solomonneas/arr-cli) (the *arr stack C
 - `jellyfin_remove_from_collection`
 
 ### Items
-- `jellyfin_search_items` — by name, optional type filter
-- `jellyfin_get_recent_items` — latest added (per-user)
-- `jellyfin_get_item` — full metadata
+- `jellyfin_search_items` - by name, optional type filter
+- `jellyfin_get_recent_items` - latest added (per-user)
+- `jellyfin_get_item` - full metadata
 
 ### Discovery
-- `jellyfin_get_resume_items` — in-progress playback for a user, with resume position in seconds
-- `jellyfin_get_next_up` — next unwatched episode per series for a user; optional `seriesId` filter
-- `jellyfin_get_similar_items` — Jellyfin's built-in "similar" recommendations for a given item
+- `jellyfin_get_resume_items` - in-progress playback for a user, with resume position in seconds
+- `jellyfin_get_next_up` - next unwatched episode per series for a user; optional `seriesId` filter
+- `jellyfin_get_similar_items` - Jellyfin's built-in "similar" recommendations for a given item
 
 ### Quick Connect
-- `jellyfin_quick_connect_status` — whether Quick Connect is enabled on the server
-- `jellyfin_quick_connect_authorize` — approve a pending code for a user *(requires `confirm: true`)*
+- `jellyfin_quick_connect_status` - whether Quick Connect is enabled on the server
+- `jellyfin_quick_connect_authorize` - approve a pending code for a user *(requires `confirm: true`)*
 
 ### Tasks & Activity
 - `jellyfin_list_scheduled_tasks`
@@ -119,8 +120,8 @@ Set these environment variables in your MCP client config:
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `JELLYFIN_URL` | yes | — | Base URL, e.g. `http://localhost:8096` or `https://jellyfin.example.com` |
-| `JELLYFIN_API_KEY` | yes | — | API key from Jellyfin Dashboard > API Keys |
+| `JELLYFIN_URL` | yes | none | Base URL, e.g. `http://localhost:8096` or `https://jellyfin.example.com` |
+| `JELLYFIN_API_KEY` | yes | none | API key from Jellyfin Dashboard > API Keys |
 | `JELLYFIN_TIMEOUT` | no | `30` | Request timeout in seconds |
 | `JELLYFIN_VERIFY_SSL` | no | `true` | Set to `false` for self-signed certs |
 
@@ -259,7 +260,7 @@ If Jellyfin binds to `localhost` on a remote host (common on Windows media serve
 ssh -N -L 8096:localhost:8096 mediaserver
 ```
 
-Then point `JELLYFIN_URL` at `http://localhost:8096`. The MCP itself has no SSH logic — it just talks HTTP.
+Then point `JELLYFIN_URL` at `http://localhost:8096`. The MCP itself has no SSH logic, it just talks HTTP.
 
 ## Example Prompts
 
@@ -277,7 +278,7 @@ Calls `jellyfin_list_libraries` to find the ID, then `jellyfin_scan_library`.
 
 > Send a message to my partner's Jellyfin that dinner is ready
 
-`jellyfin_list_sessions` → pick by username → `jellyfin_send_message_to_session`.
+`jellyfin_list_sessions` -> pick by username -> `jellyfin_send_message_to_session`.
 
 > What scheduled tasks have failed recently?
 
@@ -285,13 +286,17 @@ Calls `jellyfin_list_libraries` to find the ID, then `jellyfin_scan_library`.
 
 > What was I watching last night?
 
-Calls `jellyfin_get_resume_items` with the user's ID — returns in-progress episodes/movies with resume position in seconds.
+Calls `jellyfin_get_resume_items` with the user's ID. Returns in-progress episodes/movies with resume position in seconds.
+
+> Clear my Continue Watching list for this user.
+
+Calls `jellyfin_list_users` to resolve the target user, then `jellyfin_clear_continue_watching` with `userId` and `confirm: true`.
 
 > What's the next episode of this show for me?
 
 Calls `jellyfin_get_next_up` with the user's ID, optionally narrowed with `seriesId`.
 
-> Approve my phone's Jellyfin login — the code is `ABCDEF`.
+> Approve my phone's Jellyfin login. The code is `ABCDEF`.
 
 Calls `jellyfin_list_users` to resolve the target user, then `jellyfin_quick_connect_authorize` with `code`, `userId`, and `confirm: true`.
 

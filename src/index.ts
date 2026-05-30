@@ -25,7 +25,7 @@ async function main(): Promise<void> {
     name: "jellyfin-mcp",
     version: "0.3.0",
     description:
-      "MCP server for Jellyfin — control playback sessions (pause/resume/seek/volume/cast), manage users and libraries, mark watched/favorite, manage playlists and collections, run scheduled tasks, query content, discover resume/next-up/similar items, authorize Quick Connect codes, and inspect activity logs.",
+      "MCP server for Jellyfin: control playback sessions (pause/resume/seek/volume/cast), manage users and libraries, mark watched/favorite, clear Continue Watching, manage playlists and collections, run scheduled tasks, query content, discover resume/next-up/similar items, authorize Quick Connect codes, and inspect activity logs.",
   });
 
   const client = new JellyfinClient(config);

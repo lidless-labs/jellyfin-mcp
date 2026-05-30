@@ -10,6 +10,7 @@ import type {
   ScheduledTask,
   Playlist,
   PlayCommand,
+  UserItemData,
 } from "./types.js";
 
 // 1 tick = 100 nanoseconds. Centralized so callers pass seconds and we convert
@@ -229,9 +230,10 @@ export class JellyfinClient {
   // ── Discovery (Resume / NextUp / Similar) ─────────────────────────────────
   // Resume is per-user: Jellyfin tracks playback position on the user row, not
   // the item row. Episodes and movies with PlaybackPositionTicks > 0 show up.
-  async getResumeItems(userId: string, limit = 20): Promise<ItemsResponse> {
+  async getResumeItems(userId: string, limit = 20, startIndex = 0): Promise<ItemsResponse> {
     const params = new URLSearchParams({
       Limit: String(limit),
+      StartIndex: String(startIndex),
       Fields: "SeriesName,ProductionYear,UserData",
     });
     return this.request<ItemsResponse>(
@@ -409,7 +411,39 @@ export class JellyfinClient {
     );
   }
 
-  // ── User data (watched / favorite) ────────────────────────────────────────
+  // ── User data (watched / favorite / resume position) ─────────────────────
+  async getItemUserData(userId: string, itemId: string): Promise<UserItemData> {
+    const params = new URLSearchParams({ userId });
+    return this.request<UserItemData>(
+      `/UserItems/${encodeURIComponent(itemId)}/UserData?${params.toString()}`,
+    );
+  }
+
+  async updateItemUserData(
+    userId: string,
+    itemId: string,
+    userData: UserItemData,
+  ): Promise<UserItemData> {
+    const params = new URLSearchParams({ userId });
+    return this.request<UserItemData>(
+      `/UserItems/${encodeURIComponent(itemId)}/UserData?${params.toString()}`,
+      {
+        method: "POST",
+        body: JSON.stringify(userData),
+      },
+    );
+  }
+
+  async clearPlaybackPosition(userId: string, itemId: string): Promise<UserItemData> {
+    const current = await this.getItemUserData(userId, itemId);
+    return this.updateItemUserData(userId, itemId, {
+      ...current,
+      ItemId: current.ItemId ?? itemId,
+      PlaybackPositionTicks: 0,
+      PlayedPercentage: 0,
+    });
+  }
+
   async markPlayed(userId: string, itemId: string): Promise<void> {
     await this.request(
       `/Users/${encodeURIComponent(userId)}/PlayedItems/${encodeURIComponent(itemId)}`,
