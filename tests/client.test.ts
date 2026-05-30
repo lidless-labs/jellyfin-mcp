@@ -132,6 +132,28 @@ describe("JellyfinClient", () => {
     expect(result.PlaybackPositionTicks).toBe(123);
   });
 
+  it("getItemUserData falls back to the legacy user path on 404", async () => {
+    fetchMock
+      .mockResolvedValueOnce(new Response("missing", { status: 404 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ PlaybackPositionTicks: 456 }), { status: 200 }),
+      );
+    const result = await client.getItemUserData("u1", "i1");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const [fallbackUrl] = fetchMock.mock.calls[1];
+    expect(fallbackUrl).toBe("http://jellyfin.test/Users/u1/Items/i1/UserData");
+    expect(result?.PlaybackPositionTicks).toBe(456);
+  });
+
+  it("getItemUserData keeps the modern 404 when the legacy fallback also 404s", async () => {
+    fetchMock
+      .mockResolvedValueOnce(new Response("modern missing", { status: 404 }))
+      .mockResolvedValueOnce(new Response("legacy missing", { status: 404 }));
+    await expect(client.getItemUserData("u1", "missing")).rejects.toThrow(
+      "/UserItems/missing/UserData",
+    );
+  });
+
   it("updateItemUserData POSTs the user data body", async () => {
     fetchMock.mockResolvedValueOnce(
       new Response(JSON.stringify({ PlaybackPositionTicks: 0 }), { status: 200 }),
@@ -151,6 +173,20 @@ describe("JellyfinClient", () => {
       PlaybackPositionTicks: 0,
       IsFavorite: true,
     });
+  });
+
+  it("updateItemUserData falls back to the legacy user path on 404", async () => {
+    fetchMock
+      .mockResolvedValueOnce(new Response("missing", { status: 404 }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+    await client.updateItemUserData("u1", "i1", {
+      ItemId: "i1",
+      PlaybackPositionTicks: 0,
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const [fallbackUrl, opts] = fetchMock.mock.calls[1];
+    expect(fallbackUrl).toBe("http://jellyfin.test/Users/u1/Items/i1/UserData");
+    expect(opts.method).toBe("POST");
   });
 
   it("clearPlaybackPosition preserves user data while zeroing resume ticks", async () => {
@@ -182,6 +218,54 @@ describe("JellyfinClient", () => {
       IsFavorite: true,
       Played: false,
     });
+  });
+
+  it("clearPlaybackPosition tolerates an empty user data response", async () => {
+    fetchMock
+      .mockResolvedValueOnce(new Response("", { status: 200 }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+    await client.clearPlaybackPosition("u1", "i1");
+
+    const [, opts] = fetchMock.mock.calls[1];
+    expect(JSON.parse(opts.body as string)).toEqual({
+      ItemId: "i1",
+      PlaybackPositionTicks: 0,
+      PlayedPercentage: 0,
+    });
+  });
+
+  it("setPlaybackPosition sets ticks and derives played percentage when runtime is known", async () => {
+    fetchMock
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ItemId: "i1" }), { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ PlaybackPositionTicks: 30_000_000 }), { status: 200 }),
+      );
+
+    await client.setPlaybackPosition("u1", "i1", 3, undefined, 100_000_000);
+
+    const [, opts] = fetchMock.mock.calls[1];
+    expect(JSON.parse(opts.body as string)).toEqual({
+      ItemId: "i1",
+      PlaybackPositionTicks: 30_000_000,
+      PlayedPercentage: 30,
+    });
+  });
+
+  it("setPlaybackPosition clamps positions beyond runtime to the last runtime tick", async () => {
+    fetchMock
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ItemId: "i1" }), { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ PlaybackPositionTicks: 99_999_999 }), { status: 200 }),
+      );
+
+    await client.setPlaybackPosition("u1", "i1", 20, undefined, 100_000_000);
+
+    const [, opts] = fetchMock.mock.calls[1];
+    const body = JSON.parse(opts.body as string);
+    expect(body.ItemId).toBe("i1");
+    expect(body.PlaybackPositionTicks).toBe(99_999_999);
+    expect(body.PlayedPercentage).toBeCloseTo(99.999999);
   });
 
   it("createPlaylist POSTs JSON body with Name/UserId/Ids", async () => {
@@ -261,6 +345,22 @@ describe("JellyfinClient", () => {
     expect(parsed.searchParams.get("Limit")).toBe("10");
     expect(parsed.searchParams.get("StartIndex")).toBe("0");
     expect(result.Items[0].Id).toBe("i1");
+  });
+
+  it("getWatchHistory fetches played user items sorted by DatePlayed", async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ Items: [], TotalRecordCount: 0 }), { status: 200 }),
+    );
+    await client.getWatchHistory("user-42", 15, 5, "Movie,Episode");
+    const [url] = fetchMock.mock.calls[0];
+    const parsed = new URL(url as string);
+    expect(parsed.pathname).toBe("/Users/user-42/Items");
+    expect(parsed.searchParams.get("Filters")).toBe("IsPlayed");
+    expect(parsed.searchParams.get("SortBy")).toBe("DatePlayed");
+    expect(parsed.searchParams.get("SortOrder")).toBe("Descending");
+    expect(parsed.searchParams.get("IncludeItemTypes")).toBe("Movie,Episode");
+    expect(parsed.searchParams.get("Limit")).toBe("15");
+    expect(parsed.searchParams.get("StartIndex")).toBe("5");
   });
 
   it("getResumeItems accepts a start index for pagination", async () => {

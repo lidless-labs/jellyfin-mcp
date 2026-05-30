@@ -1,11 +1,89 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { JellyfinClient } from "../client.js";
-import { ok, fail } from "./_util.js";
+import type { Session } from "../types.js";
+import { ok, fail, refuseUnconfirmed } from "./_util.js";
 
 // 1 tick = 100 nanoseconds. 10_000 ticks per millisecond.
 const TICKS_PER_MS = 10_000;
 const ticksToSeconds = (ticks: number): number => Math.floor(ticks / TICKS_PER_MS / 1000);
+
+function sessionSummary(session: Session): Record<string, unknown> {
+  return {
+    sessionId: session.Id,
+    userId: session.UserId ?? null,
+    user: session.UserName ?? null,
+    client: session.Client ?? null,
+    device: session.DeviceName ?? null,
+    nowPlaying: session.NowPlayingItem
+      ? {
+          itemId: session.NowPlayingItem.Id,
+          name: session.NowPlayingItem.Name,
+          type: session.NowPlayingItem.Type,
+          seriesName: session.NowPlayingItem.SeriesName ?? null,
+        }
+      : null,
+  };
+}
+
+function filterSessions(
+  sessions: Session[],
+  userId: string | undefined,
+  activeOnly: boolean,
+): Session[] {
+  return sessions.filter((session) => {
+    if (userId && session.UserId !== userId) return false;
+    if (activeOnly && !session.NowPlayingItem) return false;
+    return true;
+  });
+}
+
+function multiSessionPayload(
+  action: string,
+  sessions: Session[],
+  failed: { session: Session; error: string }[],
+): Record<string, unknown> {
+  const failedIds = new Set(failed.map((failure) => failure.session.Id));
+  return {
+    action,
+    partialFailure: failed.length > 0,
+    targetedCount: sessions.length,
+    succeededCount: sessions.length - failed.length,
+    failedCount: failed.length,
+    sessions: sessions
+      .filter((session) => !failedIds.has(session.Id))
+      .map(sessionSummary),
+    failedSessions: failed.map((failure) => ({
+      ...sessionSummary(failure.session),
+      error: failure.error,
+    })),
+  };
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function resultWithPartialFailure(payload: Record<string, unknown>) {
+  return ok(payload);
+}
+
+async function runForSessions(
+  sessions: Session[],
+  action: (session: Session) => Promise<void>,
+): Promise<{ session: Session; error: string }[]> {
+  const results = await Promise.all(
+    sessions.map(async (session) => {
+      try {
+        await action(session);
+        return null;
+      } catch (error) {
+        return { session, error: errorMessage(error) };
+      }
+    }),
+  );
+  return results.filter((result): result is { session: Session; error: string } => result !== null);
+}
 
 export function registerSessionTools(server: McpServer, client: JellyfinClient): void {
   server.tool(
@@ -181,10 +259,10 @@ export function registerSessionTools(server: McpServer, client: JellyfinClient):
 
   server.tool(
     "jellyfin_set_volume",
-    "Set the playback volume on a session (0–100). Note: only supported by clients that implement the SetVolume general command (most web/desktop/mobile, not all DLNA).",
+    "Set the playback volume on a session (0-100). Note: only supported by clients that implement the SetVolume general command (most web/desktop/mobile, not all DLNA).",
     {
       sessionId: z.string().describe("Session ID from jellyfin_list_sessions"),
-      volume: z.number().int().min(0).max(100).describe("Volume level 0–100"),
+      volume: z.number().int().min(0).max(100).describe("Volume level 0-100"),
     },
     async ({ sessionId, volume }) => {
       try {
@@ -270,6 +348,115 @@ export function registerSessionTools(server: McpServer, client: JellyfinClient):
         return ok({
           result: `${playCommand} ${itemIds.length} item(s) on session ${sessionId}`,
         });
+      } catch (error) {
+        return fail(error);
+      }
+    },
+  );
+
+  server.tool(
+    "jellyfin_pause_all_sessions",
+    "Pause all matching Jellyfin playback sessions. Defaults to active sessions only. Requires confirm: true.",
+    {
+      userId: z
+        .string()
+        .trim()
+        .min(1)
+        .optional()
+        .describe("Optional user ID to restrict which sessions are paused."),
+      activeOnly: z
+        .boolean()
+        .optional()
+        .default(true)
+        .describe("If true, only pause sessions with an active NowPlayingItem."),
+      confirm: z.boolean().optional().describe("Must be true to proceed."),
+    },
+    async ({ userId, activeOnly, confirm }) => {
+      if (!confirm) {
+        return refuseUnconfirmed("pause all matching Jellyfin sessions");
+      }
+
+      try {
+        const sessions = filterSessions(await client.listSessions(), userId, activeOnly);
+        const failed = await runForSessions(sessions, (session) =>
+          client.pauseSession(session.Id),
+        );
+        const payload = multiSessionPayload("pause", sessions, failed);
+        return failed.length > 0 ? resultWithPartialFailure(payload) : ok(payload);
+      } catch (error) {
+        return fail(error);
+      }
+    },
+  );
+
+  server.tool(
+    "jellyfin_stop_all_sessions",
+    "Stop all matching Jellyfin playback sessions. Defaults to active sessions only. Requires confirm: true.",
+    {
+      userId: z
+        .string()
+        .trim()
+        .min(1)
+        .optional()
+        .describe("Optional user ID to restrict which sessions are stopped."),
+      activeOnly: z
+        .boolean()
+        .optional()
+        .default(true)
+        .describe("If true, only stop sessions with an active NowPlayingItem."),
+      confirm: z.boolean().optional().describe("Must be true to proceed."),
+    },
+    async ({ userId, activeOnly, confirm }) => {
+      if (!confirm) {
+        return refuseUnconfirmed("stop all matching Jellyfin sessions");
+      }
+
+      try {
+        const sessions = filterSessions(await client.listSessions(), userId, activeOnly);
+        const failed = await runForSessions(sessions, (session) =>
+          client.stopSession(session.Id),
+        );
+        const payload = multiSessionPayload("stop", sessions, failed);
+        return failed.length > 0 ? resultWithPartialFailure(payload) : ok(payload);
+      } catch (error) {
+        return fail(error);
+      }
+    },
+  );
+
+  server.tool(
+    "jellyfin_message_all_active_sessions",
+    "Send a message to all matching active Jellyfin sessions. Requires confirm: true.",
+    {
+      text: z.string().min(1).describe("Message body"),
+      header: z.string().optional().describe("Optional header/title for the message"),
+      timeoutMs: z
+        .number()
+        .int()
+        .positive()
+        .optional()
+        .default(5000)
+        .describe("How long the message stays on screen (milliseconds)"),
+      userId: z
+        .string()
+        .trim()
+        .min(1)
+        .optional()
+        .describe("Optional user ID to restrict which sessions receive the message."),
+      confirm: z.boolean().optional().describe("Must be true to proceed."),
+    },
+    async ({ text, header, timeoutMs, userId, confirm }) => {
+      if (!confirm) {
+        return refuseUnconfirmed("message all matching active Jellyfin sessions");
+      }
+
+      try {
+        const sessions = filterSessions(await client.listSessions(), userId, true);
+        const failed = await runForSessions(sessions, (session) =>
+          client.sendMessage(session.Id, text, header, timeoutMs),
+        );
+        const payload = multiSessionPayload("message", sessions, failed);
+        return failed.length > 0 ? resultWithPartialFailure(payload) : ok(payload);
       } catch (error) {
         return fail(error);
       }

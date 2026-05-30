@@ -78,7 +78,7 @@ export function registerItemTools(server: McpServer, client: JellyfinClient): vo
 
   server.tool(
     "jellyfin_get_item",
-    "Get full metadata for a single item by ID. Returns the raw Jellyfin Item object — use this for deep inspection after narrowing via search.",
+    "Get full metadata for a single item by ID. Returns the raw Jellyfin Item object - use this for deep inspection after narrowing via search.",
     {
       itemId: z.string().describe("Item ID from a search or recent-items result"),
     },

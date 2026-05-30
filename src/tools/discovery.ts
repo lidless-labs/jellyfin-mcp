@@ -56,7 +56,7 @@ export function registerDiscoveryTools(
         .string()
         .trim()
         .min(1)
-        .describe("User ID to compute next-up for. Required — next-up is a per-user view."),
+        .describe("User ID to compute next-up for. Required - next-up is a per-user view."),
       seriesId: z
         .string()
         .trim()
@@ -101,7 +101,7 @@ export function registerDiscoveryTools(
         .trim()
         .min(1)
         .optional()
-        .describe("Optional user context — when provided, Jellyfin filters to that user's library visibility and hydrates watched state."),
+        .describe("Optional user context - when provided, Jellyfin filters to that user's library visibility and hydrates watched state."),
       limit: z.number().int().positive().max(100).optional().default(20),
     },
     async ({ itemId, userId, limit }) => {

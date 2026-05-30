@@ -54,7 +54,7 @@ export function registerTaskTools(server: McpServer, client: JellyfinClient): vo
       minDate: z
         .string()
         .optional()
-        .describe("ISO 8601 timestamp — only return entries newer than this (e.g. 2026-04-19T00:00:00Z)"),
+        .describe("ISO 8601 timestamp - only return entries newer than this (e.g. 2026-04-19T00:00:00Z)"),
     },
     async ({ limit, minDate }) => {
       try {

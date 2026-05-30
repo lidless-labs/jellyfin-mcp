@@ -19,6 +19,9 @@ const TICKS_PER_SECOND = 10_000_000;
 export const secondsToTicks = (seconds: number): number =>
   Math.floor(seconds * TICKS_PER_SECOND);
 
+const isNotFoundError = (error: unknown): boolean =>
+  error instanceof Error && error.message.startsWith("Resource not found:");
+
 export class JellyfinClient {
   private baseUrl: string;
   private timeout: number;
@@ -58,7 +61,7 @@ export class JellyfinClient {
         const body = await response.text().catch(() => "");
         const messages: Record<number, string> = {
           401: "Invalid API key or unauthorized access",
-          403: "Forbidden — API key lacks permission for this operation",
+          403: "Forbidden - API key lacks permission for this operation",
           404: `Resource not found: ${path}`,
           500: "Jellyfin server error",
         };
@@ -234,7 +237,7 @@ export class JellyfinClient {
     const params = new URLSearchParams({
       Limit: String(limit),
       StartIndex: String(startIndex),
-      Fields: "SeriesName,ProductionYear,UserData",
+      Fields: "SeriesName,SeriesId,ProductionYear,UserData",
     });
     return this.request<ItemsResponse>(
       `/Users/${encodeURIComponent(userId)}/Items/Resume?${params.toString()}`,
@@ -242,7 +245,7 @@ export class JellyfinClient {
   }
 
   // NextUp returns the next unwatched episode per-series, filtered to one user.
-  // seriesId is optional — omit to get next-up across all series.
+  // seriesId is optional - omit to get next-up across all series.
   async getNextUp(userId: string, limit = 20, seriesId?: string): Promise<ItemsResponse> {
     const params = new URLSearchParams({
       userId,
@@ -254,7 +257,7 @@ export class JellyfinClient {
   }
 
   // Similar uses Jellyfin's built-in recommender (genre/tag/studio overlap).
-  // userId is optional but recommended — it lets Jellyfin exclude already-watched
+  // userId is optional but recommended - it lets Jellyfin exclude already-watched
   // items and hydrate UserData on the response.
   async getSimilarItems(itemId: string, userId?: string, limit = 20): Promise<ItemsResponse> {
     const params = new URLSearchParams({ Limit: String(limit) });
@@ -274,7 +277,7 @@ export class JellyfinClient {
   //      then trades the secret for an access token.
   // The MCP exposes steps 1 and 3: status (is QC enabled), authorize (admin
   // approves a pending code for a given user). Listing pending codes isn't an
-  // endpoint — codes are known only to the user who initiated.
+  // endpoint - codes are known only to the user who initiated.
   async getQuickConnectEnabled(): Promise<boolean> {
     return this.request<boolean>("/QuickConnect/Enabled");
   }
@@ -333,7 +336,7 @@ export class JellyfinClient {
   }
 
   // SetAudioStreamIndex / SetSubtitleStreamIndex are GeneralCommandType values,
-  // not playstate commands — they go through /Sessions/{id}/Command with the
+  // not playstate commands - they go through /Sessions/{id}/Command with the
   // index passed via Arguments.Index (stringified, per Jellyfin's command DTO).
   async setAudioStream(sessionId: string, index: number): Promise<void> {
     await this.request(
@@ -364,7 +367,7 @@ export class JellyfinClient {
   }
 
   // /Sessions/{id}/Command takes a generic command envelope. Volume goes
-  // 0–100 as a string in Arguments.Volume.
+  // 0-100 as a string in Arguments.Volume.
   async sendVolume(sessionId: string, volume: number): Promise<void> {
     await this.request(
       `/Sessions/${encodeURIComponent(sessionId)}/Command`,
@@ -412,35 +415,119 @@ export class JellyfinClient {
   }
 
   // ── User data (watched / favorite / resume position) ─────────────────────
-  async getItemUserData(userId: string, itemId: string): Promise<UserItemData> {
-    const params = new URLSearchParams({ userId });
-    return this.request<UserItemData>(
-      `/UserItems/${encodeURIComponent(itemId)}/UserData?${params.toString()}`,
+  async getWatchHistory(
+    userId: string,
+    limit = 20,
+    startIndex = 0,
+    itemTypes?: string,
+  ): Promise<ItemsResponse> {
+    const params = new URLSearchParams({
+      Recursive: "true",
+      Filters: "IsPlayed",
+      SortBy: "DatePlayed",
+      SortOrder: "Descending",
+      Limit: String(limit),
+      StartIndex: String(startIndex),
+      Fields: "DateCreated,SeriesName,SeriesId,ProductionYear,UserData",
+    });
+    if (itemTypes) {
+      params.set("IncludeItemTypes", itemTypes);
+    }
+    return this.request<ItemsResponse>(
+      `/Users/${encodeURIComponent(userId)}/Items?${params.toString()}`,
     );
+  }
+
+  async getItemUserData(userId: string, itemId: string): Promise<UserItemData | undefined> {
+    const params = new URLSearchParams({ userId });
+    try {
+      return await this.request<UserItemData>(
+        `/UserItems/${encodeURIComponent(itemId)}/UserData?${params.toString()}`,
+      );
+    } catch (error) {
+      if (!isNotFoundError(error)) {
+        throw error;
+      }
+      try {
+        return await this.request<UserItemData>(
+          `/Users/${encodeURIComponent(userId)}/Items/${encodeURIComponent(itemId)}/UserData`,
+        );
+      } catch (fallbackError) {
+        throw isNotFoundError(fallbackError) ? error : fallbackError;
+      }
+    }
   }
 
   async updateItemUserData(
     userId: string,
     itemId: string,
     userData: UserItemData,
-  ): Promise<UserItemData> {
+  ): Promise<UserItemData | undefined> {
     const params = new URLSearchParams({ userId });
-    return this.request<UserItemData>(
-      `/UserItems/${encodeURIComponent(itemId)}/UserData?${params.toString()}`,
-      {
-        method: "POST",
-        body: JSON.stringify(userData),
-      },
-    );
+    const options = {
+      method: "POST",
+      body: JSON.stringify(userData),
+    };
+    try {
+      return await this.request<UserItemData>(
+        `/UserItems/${encodeURIComponent(itemId)}/UserData?${params.toString()}`,
+        options,
+      );
+    } catch (error) {
+      if (!isNotFoundError(error)) {
+        throw error;
+      }
+      try {
+        return await this.request<UserItemData>(
+          `/Users/${encodeURIComponent(userId)}/Items/${encodeURIComponent(itemId)}/UserData`,
+          options,
+        );
+      } catch (fallbackError) {
+        throw isNotFoundError(fallbackError) ? error : fallbackError;
+      }
+    }
   }
 
-  async clearPlaybackPosition(userId: string, itemId: string): Promise<UserItemData> {
-    const current = await this.getItemUserData(userId, itemId);
+  async clearPlaybackPosition(
+    userId: string,
+    itemId: string,
+    currentUserData?: UserItemData,
+  ): Promise<UserItemData | undefined> {
+    const current = currentUserData ?? (await this.getItemUserData(userId, itemId)) ?? {};
     return this.updateItemUserData(userId, itemId, {
       ...current,
       ItemId: current.ItemId ?? itemId,
       PlaybackPositionTicks: 0,
       PlayedPercentage: 0,
+    });
+  }
+
+  async setPlaybackPosition(
+    userId: string,
+    itemId: string,
+    positionSec: number,
+    currentUserData?: UserItemData,
+    runtimeTicks?: number,
+  ): Promise<UserItemData | undefined> {
+    const current = currentUserData ?? (await this.getItemUserData(userId, itemId)) ?? {};
+    const requestedTicks = secondsToTicks(positionSec);
+    const maxResumeTicks =
+      typeof runtimeTicks === "number" && runtimeTicks > 0
+        ? Math.max(0, runtimeTicks - 1)
+        : undefined;
+    const positionTicks =
+      maxResumeTicks !== undefined
+        ? Math.min(requestedTicks, maxResumeTicks)
+        : requestedTicks;
+    const playedPercentage =
+      typeof runtimeTicks === "number" && runtimeTicks > 0
+        ? Math.min(100, Math.max(0, (positionTicks / runtimeTicks) * 100))
+        : current.PlayedPercentage;
+    return this.updateItemUserData(userId, itemId, {
+      ...current,
+      ItemId: current.ItemId ?? itemId,
+      PlaybackPositionTicks: positionTicks,
+      ...(playedPercentage !== undefined ? { PlayedPercentage: playedPercentage } : {}),
     });
   }
 

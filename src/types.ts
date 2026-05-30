@@ -1,5 +1,5 @@
 // Minimal type shapes for Jellyfin API responses. These cover the fields this
-// MCP actually reads — not the full API surface. Anything else is passed
+// MCP actually reads - not the full API surface. Anything else is passed
 // through as `unknown` and re-serialized back to the caller.
 
 export interface SystemInfo {
@@ -50,7 +50,9 @@ export interface NowPlayingItem {
   Id: string;
   Name: string;
   Type: string;
+  MediaType?: string;
   SeriesName?: string;
+  SeriesId?: string;
   RunTimeTicks?: number;
   ProductionYear?: number;
   [key: string]: unknown;
@@ -74,7 +76,9 @@ export interface Item {
   Id: string;
   Name: string;
   Type: string;
+  MediaType?: string;
   SeriesName?: string;
+  SeriesId?: string;
   ProductionYear?: number;
   DateCreated?: string;
   RunTimeTicks?: number;
@@ -134,11 +138,15 @@ export interface Playlist {
 }
 
 export interface UserItemData {
+  ItemId?: string;
   PlaybackPositionTicks?: number;
   PlayedPercentage?: number;
   PlayCount?: number;
   IsFavorite?: boolean;
   Played?: boolean;
+  LastPlayedDate?: string;
+  Rating?: number;
+  Likes?: boolean;
   Key?: string;
   [key: string]: unknown;
 }
@@ -147,7 +155,7 @@ export interface UserItemData {
 export type PlayCommand = "PlayNow" | "PlayNext" | "PlayLast";
 
 // Jellyfin general-command names used by POST /Sessions/{id}/Command
-// Volume goes 0–100 as a string in Arguments.Volume.
+// Volume goes 0-100 as a string in Arguments.Volume.
 export type GeneralCommand =
   | "SetVolume"
   | "Mute"

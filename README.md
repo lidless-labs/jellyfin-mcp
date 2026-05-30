@@ -20,9 +20,9 @@ Companion to [arr-cli](https://github.com/solomonneas/arr-cli) (the *arr stack C
 
 ## Features
 
-- **47 MCP tools** covering system info, libraries, users, sessions, items, scheduled tasks, user data writes, playlists, collections, discovery, and Quick Connect
-- Playback control: pause / resume / stop / seek / next / previous / volume / mute / audio-stream / subtitle-stream / cast (remote-play) / send-message
-- User data writes: mark watched/unwatched, add/remove favorites, clear Continue Watching resume positions
+- **56 MCP tools** covering system info, libraries, users, sessions, items, scheduled tasks, user data writes, playlists, collections, discovery, and Quick Connect
+- Playback control: pause / resume / stop / seek / next / previous / volume / mute / audio-stream / subtitle-stream / cast (remote-play) / send-message / bulk session controls
+- User data writes: mark watched/unwatched, add/remove favorites, preview or clear Continue Watching resume positions, set resume position
 - Playlists: create, list, append, remove entries
 - Collections: create, add, remove
 - Discovery: resume queue, next-up episodes, similar items
@@ -30,7 +30,7 @@ Companion to [arr-cli](https://github.com/solomonneas/arr-cli) (the *arr stack C
 - Library scan triggering (per-library or all)
 - User admin: list, create, delete, enable/disable, reset password
 - Activity log queries for recent events
-- Destructive / privileged ops (`restart`, `shutdown`, `delete_user`, `set_user_password`, `quick_connect_authorize`, `jellyfin_clear_continue_watching`) require explicit `confirm: true`
+- Destructive / privileged ops (`restart`, `shutdown`, `delete_user`, `set_user_password`, `quick_connect_authorize`, `jellyfin_clear_continue_watching`, bulk session controls, resume-position writes) require explicit `confirm: true`
 - Works with Claude Desktop, Claude Code, OpenClaw, Hermes Agent, Codex CLI, and any MCP-compatible client
 
 ## Tools
@@ -62,11 +62,20 @@ Companion to [arr-cli](https://github.com/solomonneas/arr-cli) (the *arr stack C
 - `jellyfin_set_volume` (0-100) / `jellyfin_set_mute` (mute/unmute/toggle)
 - `jellyfin_set_audio_stream` / `jellyfin_set_subtitle_stream` (use -1 to disable subtitles)
 - `jellyfin_play_on_session` - cast/remote-play one or more items to a session (PlayNow / PlayNext / PlayLast)
+- `jellyfin_pause_all_sessions` - pause matching sessions *(requires `confirm: true`)*
+- `jellyfin_stop_all_sessions` - stop matching sessions *(requires `confirm: true`)*
+- `jellyfin_message_all_active_sessions` - message matching active sessions *(requires `confirm: true`)*
 
 ### User Data
 - `jellyfin_mark_played` / `jellyfin_mark_unplayed`
 - `jellyfin_set_favorite` / `jellyfin_unset_favorite`
-- `jellyfin_clear_continue_watching` - clear resume positions for selected items or the whole Continue Watching queue *(requires `confirm: true`)*
+- `jellyfin_preview_continue_watching_clear` - dry-run a Continue Watching cleanup with optional filters
+- `jellyfin_clear_continue_watching` - clear resume positions for selected items or a filtered Continue Watching queue *(requires `confirm: true`)*
+- `jellyfin_clear_series_continue_watching` - clear resume positions for one show's episodes *(requires `confirm: true`)*
+- `jellyfin_clear_episode_continue_watching_except_latest` - keep one episode resume entry and clear older entries for a show *(requires `confirm: true`)*
+- `jellyfin_get_watch_history` - recently watched items for a user
+- `jellyfin_get_user_item_data` - raw watched/favorite/resume data for one item
+- `jellyfin_set_resume_position` - set a user's resume position for an item *(requires `confirm: true`)*
 
 ### Playlists
 - `jellyfin_list_playlists`
@@ -291,6 +300,18 @@ Calls `jellyfin_get_resume_items` with the user's ID. Returns in-progress episod
 > Clear my Continue Watching list for this user.
 
 Calls `jellyfin_list_users` to resolve the target user, then `jellyfin_clear_continue_watching` with `userId` and `confirm: true`.
+
+> Show what would be cleared from Continue Watching for this show.
+
+Calls `jellyfin_preview_continue_watching_clear` with `seriesId` before making changes.
+
+> I opened a bunch of episodes in one show. Keep the latest and clear the rest.
+
+Calls `jellyfin_clear_episode_continue_watching_except_latest` with `seriesId`, `userId`, and `confirm: true`.
+
+> Set this movie to resume at 42 minutes.
+
+Calls `jellyfin_set_resume_position` with `positionSec=2520` and `confirm: true`.
 
 > What's the next episode of this show for me?
 

@@ -27,7 +27,7 @@ export function registerLibraryTools(server: McpServer, client: JellyfinClient):
 
   server.tool(
     "jellyfin_scan_library",
-    "Trigger a library scan. Pass a specific library ID to scan just that one, or omit to scan all libraries. Returns immediately — the scan runs async in Jellyfin.",
+    "Trigger a library scan. Pass a specific library ID to scan just that one, or omit to scan all libraries. Returns immediately - the scan runs async in Jellyfin.",
     {
       libraryId: z
         .string()

@@ -8,7 +8,7 @@ export function registerPlaylistTools(server: McpServer, client: JellyfinClient)
     "jellyfin_list_playlists",
     "List playlists visible to a user. Use jellyfin_list_users to find an admin ID for full visibility.",
     {
-      userId: z.string().describe("User ID — playlists are scoped per user"),
+      userId: z.string().describe("User ID - playlists are scoped per user"),
     },
     async ({ userId }) => {
       try {
@@ -40,7 +40,7 @@ export function registerPlaylistTools(server: McpServer, client: JellyfinClient)
       mediaType: z
         .enum(["Audio", "Video", "Photo"])
         .optional()
-        .describe("Media type — required by Jellyfin if itemIds is empty"),
+        .describe("Media type - required by Jellyfin if itemIds is empty"),
     },
     async ({ name, userId, itemIds, mediaType }) => {
       try {
@@ -57,7 +57,7 @@ export function registerPlaylistTools(server: McpServer, client: JellyfinClient)
     "List the items in a playlist, in playback order. Returns each item's playlistEntryId (use that for removal, NOT the underlying item ID).",
     {
       playlistId: z.string().describe("Playlist ID"),
-      userId: z.string().describe("User ID — playlists return user-scoped views"),
+      userId: z.string().describe("User ID - playlists return user-scoped views"),
     },
     async ({ playlistId, userId }) => {
       try {
@@ -98,7 +98,7 @@ export function registerPlaylistTools(server: McpServer, client: JellyfinClient)
 
   server.tool(
     "jellyfin_remove_from_playlist",
-    "Remove entries from a playlist by their playlistEntryId values (NOT raw item IDs — get them from jellyfin_get_playlist_items).",
+    "Remove entries from a playlist by their playlistEntryId values (NOT raw item IDs - get them from jellyfin_get_playlist_items).",
     {
       playlistId: z.string().describe("Playlist ID"),
       entryIds: z
