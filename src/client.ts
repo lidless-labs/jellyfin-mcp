@@ -1,3 +1,4 @@
+import { Agent } from "undici";
 import type { JellyfinConfig } from "./config.js";
 import type {
   SystemInfo,
@@ -25,10 +26,19 @@ const isNotFoundError = (error: unknown): boolean =>
 export class JellyfinClient {
   private baseUrl: string;
   private timeout: number;
+  // When JELLYFIN_VERIFY_SSL=false, skip TLS certificate validation for the
+  // Jellyfin connection ONLY by passing a confined undici dispatcher on each
+  // request. This avoids the process-global NODE_TLS_REJECT_UNAUTHORIZED="0",
+  // which would silently disable cert validation for every other fetch in the
+  // process. Secure-by-default: undefined dispatcher = normal validation.
+  private dispatcher?: Agent;
 
   constructor(private config: JellyfinConfig) {
     this.baseUrl = config.url;
     this.timeout = config.timeout;
+    if (config.verifySsl === false) {
+      this.dispatcher = new Agent({ connect: { rejectUnauthorized: false } });
+    }
   }
 
   private async request<T>(
@@ -55,7 +65,11 @@ export class JellyfinClient {
         ...options,
         headers: { ...headers, ...(options.headers as Record<string, string>) },
         signal: controller.signal,
-      });
+        // `dispatcher` is an undici-specific fetch option not in the lib.dom
+        // RequestInit type. Only set when TLS verification is disabled; left
+        // undefined otherwise so the default (validating) dispatcher is used.
+        ...(this.dispatcher ? { dispatcher: this.dispatcher } : {}),
+      } as RequestInit & { dispatcher?: Agent });
 
       if (!response.ok) {
         const body = await response.text().catch(() => "");
@@ -66,7 +80,17 @@ export class JellyfinClient {
           500: "Jellyfin server error",
         };
         const msg = messages[response.status] ?? `HTTP ${response.status}`;
-        throw new Error(`${msg}${body ? `: ${body.slice(0, 200)}` : ""}`);
+        // The raw downstream body can carry internal Jellyfin detail (stack
+        // traces, internal paths, IDs). fail() returns thrown messages verbatim
+        // to the LLM/MCP client, so log the full body server-side (stderr) for
+        // operators and surface only the status-derived summary to the client,
+        // matching the Quick Connect secret-redaction posture elsewhere.
+        if (body) {
+          console.error(
+            `jellyfin-mcp: HTTP ${response.status} from ${path}: ${body}`,
+          );
+        }
+        throw new Error(`${msg} (HTTP ${response.status})`);
       }
 
       if (!parseJson) {

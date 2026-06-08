@@ -42,6 +42,55 @@ describe("JellyfinClient", () => {
     await expect(client.getSystemInfo()).rejects.toThrow(/Invalid API key/);
   });
 
+  it("does not leak the raw downstream body into the thrown error", async () => {
+    const internal =
+      "System.Exception: secret stack trace at /opt/jellyfin/internal/path.cs:42";
+    const stderr = vi.spyOn(console, "error").mockImplementation(() => {});
+    fetchMock.mockResolvedValueOnce(new Response(internal, { status: 500 }));
+
+    await expect(client.getSystemInfo()).rejects.toThrow(
+      "Jellyfin server error (HTTP 500)",
+    );
+    // Client-facing message must not carry the internal body...
+    await expect(client.getSystemInfo().catch((e) => e.message)).resolves.not.toContain(
+      "secret stack trace",
+    );
+    // ...but operators still get the full body on stderr.
+    expect(stderr).toHaveBeenCalledWith(
+      expect.stringContaining("secret stack trace"),
+    );
+    stderr.mockRestore();
+  });
+
+  it("scopes TLS-skip to the Jellyfin connection via a per-request dispatcher", async () => {
+    const insecure = new JellyfinClient({
+      url: "https://jellyfin.test",
+      apiKey: "test-key",
+      verifySsl: false,
+      timeout: 5000,
+    });
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ ServerName: "Test" }), { status: 200 }),
+    );
+
+    await insecure.getSystemInfo();
+
+    const [, opts] = fetchMock.mock.calls[0];
+    // A confined undici dispatcher is passed (never the process-global
+    // NODE_TLS_REJECT_UNAUTHORIZED), and the default client passes none.
+    expect((opts as { dispatcher?: unknown }).dispatcher).toBeDefined();
+    expect(process.env.NODE_TLS_REJECT_UNAUTHORIZED).not.toBe("0");
+  });
+
+  it("passes no dispatcher when TLS verification is enabled (secure default)", async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ ServerName: "Test" }), { status: 200 }),
+    );
+    await client.getSystemInfo();
+    const [, opts] = fetchMock.mock.calls[0];
+    expect((opts as { dispatcher?: unknown }).dispatcher).toBeUndefined();
+  });
+
   it("url-encodes session IDs on playback control", async () => {
     fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
     await client.pauseSession("abc/def 123");

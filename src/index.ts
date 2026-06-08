@@ -17,9 +17,11 @@ import { registerQuickConnectTools } from "./tools/quickconnect.js";
 async function main(): Promise<void> {
   const config = getConfig();
 
-  if (!config.verifySsl) {
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-  }
+  // TLS verification skipping (when JELLYFIN_VERIFY_SSL=false) is scoped to the
+  // Jellyfin connection inside JellyfinClient via a per-instance undici
+  // dispatcher. We deliberately do NOT set NODE_TLS_REJECT_UNAUTHORIZED, which
+  // would disable certificate validation for every outbound TLS connection in
+  // the process.
 
   const server = new McpServer({
     name: "jellyfin-mcp",

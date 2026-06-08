@@ -31,6 +31,7 @@ Companion to [arr-cli](https://github.com/solomonneas/arr-cli) (the *arr stack C
 - User admin: list, create, delete, enable/disable, reset password
 - Activity log queries for recent events
 - Destructive / privileged ops (`restart`, `shutdown`, `delete_user`, `set_user_password`, `quick_connect_authorize`, `jellyfin_clear_continue_watching`, bulk session controls, resume-position writes) require explicit `confirm: true`
+- Upstream Jellyfin error responses are summarized (status only) before being returned to the client; the full response body is logged to stderr for operators, so internal server detail is not surfaced to the model
 - Works with Claude Desktop, Claude Code, OpenClaw, Hermes Agent, Codex CLI, and any MCP-compatible client
 
 ## Tools
@@ -132,7 +133,9 @@ Set these environment variables in your MCP client config:
 | `JELLYFIN_URL` | yes | none | Base URL, e.g. `http://localhost:8096` or `https://jellyfin.example.com` |
 | `JELLYFIN_API_KEY` | yes | none | API key from Jellyfin Dashboard > API Keys |
 | `JELLYFIN_TIMEOUT` | no | `30` | Request timeout in seconds |
-| `JELLYFIN_VERIFY_SSL` | no | `true` | Set to `false` for self-signed certs |
+| `JELLYFIN_VERIFY_SSL` | no | `true` | Set to `false` to skip TLS certificate validation for the Jellyfin connection (e.g. self-signed certs) |
+
+> **Note:** `JELLYFIN_VERIFY_SSL=false` only relaxes certificate validation for the Jellyfin connection itself (via a confined per-request HTTP dispatcher). It does not touch global TLS settings, so certificate validation for any other outbound request in the process is unaffected. Leave it at the secure default unless you specifically need it.
 
 ### Getting an API key
 
