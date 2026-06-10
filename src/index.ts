@@ -1,3 +1,4 @@
+import { createRequire } from "node:module";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { getConfig } from "./config.js";
@@ -14,6 +15,13 @@ import { registerCollectionTools } from "./tools/collections.js";
 import { registerDiscoveryTools } from "./tools/discovery.js";
 import { registerQuickConnectTools } from "./tools/quickconnect.js";
 
+// Single source of truth for the server name and version. Resolved at runtime
+// relative to this file: both src/index.ts (dev via tsx) and dist/index.js
+// (build, npm package) sit one level below the package root, and npm always
+// ships package.json, so "../package.json" resolves in every mode.
+const nodeRequire = createRequire(import.meta.url);
+const pkg = nodeRequire("../package.json") as { name: string; version: string };
+
 async function main(): Promise<void> {
   const config = getConfig();
 
@@ -24,8 +32,8 @@ async function main(): Promise<void> {
   // the process.
 
   const server = new McpServer({
-    name: "jellyfin-mcp",
-    version: "0.3.0",
+    name: pkg.name,
+    version: pkg.version,
     description:
       "MCP server for Jellyfin: control playback sessions (pause/resume/seek/volume/cast), manage users and libraries, mark watched/favorite, manage Continue Watching and resume state, manage playlists and collections, run scheduled tasks, query content, discover resume/next-up/similar items, authorize Quick Connect codes, and inspect activity logs.",
   });
