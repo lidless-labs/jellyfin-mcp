@@ -52,6 +52,8 @@ Companion to [arr-cli](https://github.com/solomonneas/arr-cli) (the *arr stack C
 - `jellyfin_set_user_disabled`
 - `jellyfin_set_user_password` *(requires `confirm: true`)*
 
+> **Warning:** `jellyfin_set_user_password` takes the new password as plaintext tool input. That means the password transits your LLM conversation, the model provider's request logs, and any saved session transcript. Treat any password set this way as exposed: use a throwaway value and have the user change it in the Jellyfin UI, or set passwords in the Jellyfin dashboard instead.
+
 ### Sessions & Playback
 - `jellyfin_list_sessions` - active/idle clients with now-playing, progress, paused state
 - `jellyfin_pause_session`

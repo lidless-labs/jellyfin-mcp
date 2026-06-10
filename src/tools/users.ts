@@ -93,7 +93,7 @@ export function registerUserTools(server: McpServer, client: JellyfinClient): vo
 
   server.tool(
     "jellyfin_set_user_password",
-    "Set (or reset) a Jellyfin user's password. Destructive: locks the user out of any old password. Requires confirm: true.",
+    "Set (or reset) a Jellyfin user's password. Destructive: locks the user out of any old password. Requires confirm: true. Warning: the new password is passed as plaintext tool input, so it transits the LLM conversation, the provider's request logs, and any session transcript. Treat it as exposed: prefer a throwaway value the user changes in the Jellyfin UI afterwards.",
     {
       userId: z.string().describe("User ID from jellyfin_list_users"),
       newPassword: z.string().min(1).describe("The new password in plaintext (Jellyfin hashes server-side)"),
