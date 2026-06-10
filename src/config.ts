@@ -5,6 +5,24 @@ export interface JellyfinConfig {
   timeout: number;
 }
 
+const DEFAULT_TIMEOUT_SECONDS = 30;
+
+// JELLYFIN_TIMEOUT is operator-controlled, but a typo'd value used to flow
+// through parseInt as NaN, which setTimeout coerces to ~1ms and every request
+// then aborts instantly with a misleading timeout error. Validate and fall
+// back to the default instead.
+function parseTimeoutSeconds(raw: string | undefined): number {
+  if (raw === undefined || raw.trim() === "") return DEFAULT_TIMEOUT_SECONDS;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    console.error(
+      `jellyfin-mcp: invalid JELLYFIN_TIMEOUT "${raw}" (expected a positive number of seconds); using default ${DEFAULT_TIMEOUT_SECONDS}s`,
+    );
+    return DEFAULT_TIMEOUT_SECONDS;
+  }
+  return parsed;
+}
+
 export function getConfig(): JellyfinConfig {
   const url = process.env.JELLYFIN_URL;
   if (!url) {
@@ -19,7 +37,7 @@ export function getConfig(): JellyfinConfig {
   }
 
   const verifySsl = process.env.JELLYFIN_VERIFY_SSL !== "false";
-  const timeout = parseInt(process.env.JELLYFIN_TIMEOUT ?? "30", 10) * 1000;
+  const timeout = parseTimeoutSeconds(process.env.JELLYFIN_TIMEOUT) * 1000;
 
   return {
     url: url.replace(/\/+$/, ""),
