@@ -1,13 +1,14 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { JellyfinClient } from "../client.js";
-import { ok, fail } from "./_util.js";
+import { ok, fail, NON_DESTRUCTIVE, READ_ONLY } from "./_util.js";
 
 export function registerLibraryTools(server: McpServer, client: JellyfinClient): void {
   server.tool(
     "jellyfin_list_libraries",
     "List all Jellyfin libraries (virtual folders) with their name, ID, collection type (movies/tvshows/music/...), and filesystem paths.",
     {},
+    READ_ONLY,
     async () => {
       try {
         const libs = await client.listLibraries();
@@ -34,6 +35,7 @@ export function registerLibraryTools(server: McpServer, client: JellyfinClient):
         .optional()
         .describe("Library ID from jellyfin_list_libraries. Omit to scan all libraries."),
     },
+    NON_DESTRUCTIVE,
     async ({ libraryId }) => {
       try {
         await client.scanLibraries(libraryId);

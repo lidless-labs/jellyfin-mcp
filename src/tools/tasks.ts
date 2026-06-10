@@ -1,13 +1,14 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { JellyfinClient } from "../client.js";
-import { ok, fail } from "./_util.js";
+import { ok, fail, NON_DESTRUCTIVE, READ_ONLY } from "./_util.js";
 
 export function registerTaskTools(server: McpServer, client: JellyfinClient): void {
   server.tool(
     "jellyfin_list_scheduled_tasks",
     "List all Jellyfin scheduled tasks with state (Idle/Running), progress %, and last execution info.",
     {},
+    READ_ONLY,
     async () => {
       try {
         const tasks = await client.listScheduledTasks();
@@ -36,6 +37,7 @@ export function registerTaskTools(server: McpServer, client: JellyfinClient): vo
     {
       taskId: z.string().describe("Task ID from jellyfin_list_scheduled_tasks"),
     },
+    NON_DESTRUCTIVE,
     async ({ taskId }) => {
       try {
         await client.runScheduledTask(taskId);
@@ -56,6 +58,7 @@ export function registerTaskTools(server: McpServer, client: JellyfinClient): vo
         .optional()
         .describe("ISO 8601 timestamp - only return entries newer than this (e.g. 2026-04-19T00:00:00Z)"),
     },
+    READ_ONLY,
     async ({ limit, minDate }) => {
       try {
         const log = await client.getActivityLog(limit, minDate);

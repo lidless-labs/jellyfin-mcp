@@ -2,7 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { JellyfinClient } from "../client.js";
 import type { Session } from "../types.js";
-import { ok, fail, refuseUnconfirmed } from "./_util.js";
+import { ok, fail, refuseUnconfirmed, DESTRUCTIVE, NON_DESTRUCTIVE, READ_ONLY } from "./_util.js";
 
 // 1 tick = 100 nanoseconds. 10_000 ticks per millisecond.
 const TICKS_PER_MS = 10_000;
@@ -96,6 +96,7 @@ export function registerSessionTools(server: McpServer, client: JellyfinClient):
         .default(false)
         .describe("If true, only return sessions with a NowPlayingItem"),
     },
+    READ_ONLY,
     async ({ activeOnly }) => {
       try {
         const sessions = await client.listSessions();
@@ -145,6 +146,7 @@ export function registerSessionTools(server: McpServer, client: JellyfinClient):
     {
       sessionId: z.string().describe("Session ID from jellyfin_list_sessions"),
     },
+    NON_DESTRUCTIVE,
     async ({ sessionId }) => {
       try {
         await client.pauseSession(sessionId);
@@ -161,6 +163,7 @@ export function registerSessionTools(server: McpServer, client: JellyfinClient):
     {
       sessionId: z.string().describe("Session ID from jellyfin_list_sessions"),
     },
+    NON_DESTRUCTIVE,
     async ({ sessionId }) => {
       try {
         await client.resumeSession(sessionId);
@@ -177,6 +180,7 @@ export function registerSessionTools(server: McpServer, client: JellyfinClient):
     {
       sessionId: z.string().describe("Session ID from jellyfin_list_sessions"),
     },
+    DESTRUCTIVE,
     async ({ sessionId }) => {
       try {
         await client.stopSession(sessionId);
@@ -202,6 +206,7 @@ export function registerSessionTools(server: McpServer, client: JellyfinClient):
         .default(5000)
         .describe("How long the message stays on screen (milliseconds)"),
     },
+    NON_DESTRUCTIVE,
     async ({ sessionId, text, header, timeoutMs }) => {
       try {
         await client.sendMessage(sessionId, text, header, timeoutMs);
@@ -219,6 +224,7 @@ export function registerSessionTools(server: McpServer, client: JellyfinClient):
       sessionId: z.string().describe("Session ID from jellyfin_list_sessions"),
       positionSec: z.number().nonnegative().describe("Target position in seconds from start"),
     },
+    NON_DESTRUCTIVE,
     async ({ sessionId, positionSec }) => {
       try {
         await client.seekSession(sessionId, positionSec);
@@ -233,6 +239,7 @@ export function registerSessionTools(server: McpServer, client: JellyfinClient):
     "jellyfin_next_track",
     "Advance to the next track/episode in the session's queue.",
     { sessionId: z.string().describe("Session ID from jellyfin_list_sessions") },
+    NON_DESTRUCTIVE,
     async ({ sessionId }) => {
       try {
         await client.nextTrack(sessionId);
@@ -247,6 +254,7 @@ export function registerSessionTools(server: McpServer, client: JellyfinClient):
     "jellyfin_previous_track",
     "Go back to the previous track/episode in the session's queue.",
     { sessionId: z.string().describe("Session ID from jellyfin_list_sessions") },
+    NON_DESTRUCTIVE,
     async ({ sessionId }) => {
       try {
         await client.previousTrack(sessionId);
@@ -264,6 +272,7 @@ export function registerSessionTools(server: McpServer, client: JellyfinClient):
       sessionId: z.string().describe("Session ID from jellyfin_list_sessions"),
       volume: z.number().int().min(0).max(100).describe("Volume level 0-100"),
     },
+    NON_DESTRUCTIVE,
     async ({ sessionId, volume }) => {
       try {
         await client.sendVolume(sessionId, volume);
@@ -281,6 +290,7 @@ export function registerSessionTools(server: McpServer, client: JellyfinClient):
       sessionId: z.string().describe("Session ID from jellyfin_list_sessions"),
       action: z.enum(["mute", "unmute", "toggle"]).describe("Mute action to send"),
     },
+    NON_DESTRUCTIVE,
     async ({ sessionId, action }) => {
       try {
         const cmd = action === "mute" ? "Mute" : action === "unmute" ? "Unmute" : "ToggleMute";
@@ -299,6 +309,7 @@ export function registerSessionTools(server: McpServer, client: JellyfinClient):
       sessionId: z.string().describe("Session ID from jellyfin_list_sessions"),
       index: z.number().int().min(0).describe("Audio stream index"),
     },
+    NON_DESTRUCTIVE,
     async ({ sessionId, index }) => {
       try {
         await client.setAudioStream(sessionId, index);
@@ -316,6 +327,7 @@ export function registerSessionTools(server: McpServer, client: JellyfinClient):
       sessionId: z.string().describe("Session ID from jellyfin_list_sessions"),
       index: z.number().int().min(-1).describe("Subtitle stream index (-1 to disable)"),
     },
+    NON_DESTRUCTIVE,
     async ({ sessionId, index }) => {
       try {
         await client.setSubtitleStream(sessionId, index);
@@ -342,6 +354,7 @@ export function registerSessionTools(server: McpServer, client: JellyfinClient):
         .optional()
         .describe("Optional start offset in seconds (only meaningful with PlayNow)"),
     },
+    NON_DESTRUCTIVE,
     async ({ sessionId, itemIds, playCommand, startPositionSec }) => {
       try {
         await client.playOnSession(sessionId, itemIds, playCommand, startPositionSec);
@@ -371,6 +384,7 @@ export function registerSessionTools(server: McpServer, client: JellyfinClient):
         .describe("If true, only pause sessions with an active NowPlayingItem."),
       confirm: z.boolean().optional().describe("Must be true to proceed."),
     },
+    DESTRUCTIVE,
     async ({ userId, activeOnly, confirm }) => {
       if (!confirm) {
         return refuseUnconfirmed("pause all matching Jellyfin sessions");
@@ -406,6 +420,7 @@ export function registerSessionTools(server: McpServer, client: JellyfinClient):
         .describe("If true, only stop sessions with an active NowPlayingItem."),
       confirm: z.boolean().optional().describe("Must be true to proceed."),
     },
+    DESTRUCTIVE,
     async ({ userId, activeOnly, confirm }) => {
       if (!confirm) {
         return refuseUnconfirmed("stop all matching Jellyfin sessions");
@@ -445,6 +460,7 @@ export function registerSessionTools(server: McpServer, client: JellyfinClient):
         .describe("Optional user ID to restrict which sessions receive the message."),
       confirm: z.boolean().optional().describe("Must be true to proceed."),
     },
+    DESTRUCTIVE,
     async ({ text, header, timeoutMs, userId, confirm }) => {
       if (!confirm) {
         return refuseUnconfirmed("message all matching active Jellyfin sessions");

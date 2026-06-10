@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { JellyfinClient } from "../client.js";
-import { ok, fail } from "./_util.js";
+import { ok, fail, DESTRUCTIVE, NON_DESTRUCTIVE, READ_ONLY } from "./_util.js";
 
 export function registerPlaylistTools(server: McpServer, client: JellyfinClient): void {
   server.tool(
@@ -10,6 +10,7 @@ export function registerPlaylistTools(server: McpServer, client: JellyfinClient)
     {
       userId: z.string().describe("User ID - playlists are scoped per user"),
     },
+    READ_ONLY,
     async ({ userId }) => {
       try {
         const result = await client.listPlaylists(userId);
@@ -42,6 +43,7 @@ export function registerPlaylistTools(server: McpServer, client: JellyfinClient)
         .optional()
         .describe("Media type - required by Jellyfin if itemIds is empty"),
     },
+    NON_DESTRUCTIVE,
     async ({ name, userId, itemIds, mediaType }) => {
       try {
         const result = await client.createPlaylist(name, userId, itemIds, mediaType);
@@ -59,6 +61,7 @@ export function registerPlaylistTools(server: McpServer, client: JellyfinClient)
       playlistId: z.string().describe("Playlist ID"),
       userId: z.string().describe("User ID - playlists return user-scoped views"),
     },
+    READ_ONLY,
     async ({ playlistId, userId }) => {
       try {
         const result = await client.getPlaylistItems(playlistId, userId);
@@ -86,6 +89,7 @@ export function registerPlaylistTools(server: McpServer, client: JellyfinClient)
       itemIds: z.array(z.string().min(1)).min(1).describe("Item IDs to append"),
       userId: z.string().describe("User ID performing the add"),
     },
+    NON_DESTRUCTIVE,
     async ({ playlistId, itemIds, userId }) => {
       try {
         await client.addToPlaylist(playlistId, itemIds, userId);
@@ -106,6 +110,7 @@ export function registerPlaylistTools(server: McpServer, client: JellyfinClient)
         .min(1)
         .describe("playlistEntryId values from jellyfin_get_playlist_items"),
     },
+    DESTRUCTIVE,
     async ({ playlistId, entryIds }) => {
       try {
         await client.removeFromPlaylist(playlistId, entryIds);

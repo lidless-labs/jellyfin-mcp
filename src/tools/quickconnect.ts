@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { JellyfinClient } from "../client.js";
-import { ok, fail, refuseUnconfirmed } from "./_util.js";
+import { ok, fail, refuseUnconfirmed, DESTRUCTIVE, READ_ONLY } from "./_util.js";
 
 // The underlying JellyfinClient.request() surfaces the failed path in the error
 // message (e.g. "Resource not found: /QuickConnect/Authorize?code=ABC123&userId=…").
@@ -37,6 +37,7 @@ export function registerQuickConnectTools(
     "jellyfin_quick_connect_status",
     "Check whether Quick Connect is enabled on the server. Quick Connect lets a user log in on a new client by entering a 6-character code on an already-authenticated client.",
     {},
+    READ_ONLY,
     async () => {
       try {
         const enabled = await client.getQuickConnectEnabled();
@@ -66,6 +67,7 @@ export function registerQuickConnectTools(
         .optional()
         .describe("Must be true to proceed - this grants a session to the specified user account."),
     },
+    DESTRUCTIVE,
     async ({ code, userId, confirm }) => {
       if (!confirm) {
         // Don't echo the code back - it's a short-lived auth secret, and tool

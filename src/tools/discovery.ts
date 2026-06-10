@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { JellyfinClient } from "../client.js";
-import { ok, fail } from "./_util.js";
+import { ok, fail, READ_ONLY } from "./_util.js";
 
 // 1 tick = 100 nanoseconds. Mirrors the constant in client.ts; kept local so
 // this file doesn't reach into the client module for presentation math.
@@ -24,6 +24,7 @@ export function registerDiscoveryTools(
         .describe("User ID whose resume queue to fetch. Use jellyfin_list_users to find IDs."),
       limit: z.number().int().positive().max(100).optional().default(20),
     },
+    READ_ONLY,
     async ({ userId, limit }) => {
       try {
         const result = await client.getResumeItems(userId, limit);
@@ -65,6 +66,7 @@ export function registerDiscoveryTools(
         .describe("Optional series ID to restrict to one show. Omit for all series."),
       limit: z.number().int().positive().max(100).optional().default(20),
     },
+    READ_ONLY,
     async ({ userId, seriesId, limit }) => {
       try {
         const result = await client.getNextUp(userId, limit, seriesId);
@@ -104,6 +106,7 @@ export function registerDiscoveryTools(
         .describe("Optional user context - when provided, Jellyfin filters to that user's library visibility and hydrates watched state."),
       limit: z.number().int().positive().max(100).optional().default(20),
     },
+    READ_ONLY,
     async ({ itemId, userId, limit }) => {
       try {
         const result = await client.getSimilarItems(itemId, userId, limit);

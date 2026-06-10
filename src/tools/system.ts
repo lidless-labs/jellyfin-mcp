@@ -1,13 +1,14 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { JellyfinClient } from "../client.js";
-import { ok, fail, refuseUnconfirmed } from "./_util.js";
+import { ok, fail, refuseUnconfirmed, DESTRUCTIVE, READ_ONLY } from "./_util.js";
 
 export function registerSystemTools(server: McpServer, client: JellyfinClient): void {
   server.tool(
     "jellyfin_get_status",
     "Get Jellyfin server info: name, version, OS, architecture, local address, pending restart, update availability.",
     {},
+    READ_ONLY,
     async () => {
       try {
         const info = await client.getSystemInfo();
@@ -36,6 +37,7 @@ export function registerSystemTools(server: McpServer, client: JellyfinClient): 
         .optional()
         .describe("Must be true. Required acknowledgement that active sessions will disconnect."),
     },
+    DESTRUCTIVE,
     async ({ confirm }) => {
       if (!confirm) return refuseUnconfirmed("restart the Jellyfin server");
       try {
@@ -56,6 +58,7 @@ export function registerSystemTools(server: McpServer, client: JellyfinClient): 
         .optional()
         .describe("Must be true. Required acknowledgement that the server will not come back on its own."),
     },
+    DESTRUCTIVE,
     async ({ confirm }) => {
       if (!confirm) return refuseUnconfirmed("shut down the Jellyfin server");
       try {

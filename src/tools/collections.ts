@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { JellyfinClient } from "../client.js";
-import { ok, fail } from "./_util.js";
+import { ok, fail, DESTRUCTIVE, NON_DESTRUCTIVE } from "./_util.js";
 
 export function registerCollectionTools(server: McpServer, client: JellyfinClient): void {
   server.tool(
@@ -15,6 +15,7 @@ export function registerCollectionTools(server: McpServer, client: JellyfinClien
         .default([])
         .describe("Optional initial item IDs"),
     },
+    NON_DESTRUCTIVE,
     async ({ name, itemIds }) => {
       try {
         const result = await client.createCollection(name, itemIds);
@@ -32,6 +33,7 @@ export function registerCollectionTools(server: McpServer, client: JellyfinClien
       collectionId: z.string().describe("Collection ID"),
       itemIds: z.array(z.string().min(1)).min(1).describe("Item IDs to add"),
     },
+    NON_DESTRUCTIVE,
     async ({ collectionId, itemIds }) => {
       try {
         await client.addToCollection(collectionId, itemIds);
@@ -49,6 +51,7 @@ export function registerCollectionTools(server: McpServer, client: JellyfinClien
       collectionId: z.string().describe("Collection ID"),
       itemIds: z.array(z.string().min(1)).min(1).describe("Item IDs to remove"),
     },
+    DESTRUCTIVE,
     async ({ collectionId, itemIds }) => {
       try {
         await client.removeFromCollection(collectionId, itemIds);

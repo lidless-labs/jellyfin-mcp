@@ -1,6 +1,26 @@
 // Shared helpers for tool response formatting. Keeps every tool handler
 // returning the same shape without each one reimplementing try/catch.
 
+import type { ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
+
+// MCP tool annotations, passed as the argument before the handler in
+// server.tool(). They are hints only (clients must not rely on them for
+// security), but clients that implement human-in-the-loop approval use
+// destructiveHint to decide which calls need a human, and readOnlyHint to
+// skip approval entirely. Every tool registers exactly one of these.
+export const READ_ONLY: ToolAnnotations = { readOnlyHint: true };
+// Writes that are additive or trivially reversible (pause, favorite, create).
+export const NON_DESTRUCTIVE: ToolAnnotations = {
+  readOnlyHint: false,
+  destructiveHint: false,
+};
+// Irreversible or disruptive: deletes, password resets, shutdown/restart,
+// stopping playback, clearing resume state, granting sessions.
+export const DESTRUCTIVE: ToolAnnotations = {
+  readOnlyHint: false,
+  destructiveHint: true,
+};
+
 type TextContent = { type: "text"; text: string };
 type ToolResult = { content: TextContent[]; isError?: boolean };
 

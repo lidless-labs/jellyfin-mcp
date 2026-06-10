@@ -2,7 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { JellyfinClient } from "../client.js";
 import type { Item, UserItemData } from "../types.js";
-import { ok, fail, refuseUnconfirmed } from "./_util.js";
+import { ok, fail, refuseUnconfirmed, DESTRUCTIVE, NON_DESTRUCTIVE, READ_ONLY } from "./_util.js";
 
 const TICKS_PER_SECOND = 10_000_000;
 const ticksToSeconds = (ticks: number | undefined | null): number | null =>
@@ -285,6 +285,7 @@ export function registerUserDataTools(server: McpServer, client: JellyfinClient)
       pageSize: z.number().int().positive().max(500).optional().default(100),
       ...filterSchema,
     },
+    READ_ONLY,
     async ({ userId, itemIds, pageSize, ...filters }) => {
       try {
         const selection = await selectContinueWatchingItems(
@@ -339,6 +340,7 @@ export function registerUserDataTools(server: McpServer, client: JellyfinClient)
         .optional()
         .describe("Must be true to proceed because this changes user playback progress."),
     },
+    DESTRUCTIVE,
     async ({ userId, itemIds, pageSize, confirm, ...filters }) => {
       if (!confirm) {
         return refuseUnconfirmed(
@@ -373,6 +375,7 @@ export function registerUserDataTools(server: McpServer, client: JellyfinClient)
       pageSize: z.number().int().positive().max(500).optional().default(100),
       confirm: z.boolean().optional().describe("Must be true to proceed."),
     },
+    DESTRUCTIVE,
     async ({ userId, seriesId, pageSize, confirm }) => {
       if (!confirm) {
         return refuseUnconfirmed(
@@ -412,6 +415,7 @@ export function registerUserDataTools(server: McpServer, client: JellyfinClient)
       pageSize: z.number().int().positive().max(500).optional().default(100),
       confirm: z.boolean().optional().describe("Must be true to proceed."),
     },
+    DESTRUCTIVE,
     async ({ userId, seriesId, keepBy, pageSize, confirm }) => {
       if (!confirm) {
         return refuseUnconfirmed(
@@ -458,6 +462,7 @@ export function registerUserDataTools(server: McpServer, client: JellyfinClient)
       limit: z.number().int().positive().max(200).optional().default(20),
       startIndex: z.number().int().nonnegative().optional().default(0),
     },
+    READ_ONLY,
     async ({ userId, itemTypes, limit, startIndex }) => {
       try {
         const result = await client.getWatchHistory(
@@ -484,6 +489,7 @@ export function registerUserDataTools(server: McpServer, client: JellyfinClient)
       userId: z.string().trim().min(1).describe("User ID whose item data should be fetched."),
       itemId: z.string().trim().min(1).describe("Item ID to inspect."),
     },
+    READ_ONLY,
     async ({ userId, itemId }) => {
       try {
         const userData = await client.getItemUserData(userId, itemId);
@@ -503,6 +509,7 @@ export function registerUserDataTools(server: McpServer, client: JellyfinClient)
       positionSec: z.number().nonnegative().describe("Resume position in seconds from the start."),
       confirm: z.boolean().optional().describe("Must be true to proceed because this changes user playback progress."),
     },
+    DESTRUCTIVE,
     async ({ userId, itemId, positionSec, confirm }) => {
       if (!confirm) {
         return refuseUnconfirmed(
@@ -538,6 +545,7 @@ export function registerUserDataTools(server: McpServer, client: JellyfinClient)
       userId: z.string().describe("User ID from jellyfin_list_users"),
       itemId: z.string().describe("Item ID from a search or recent-items result"),
     },
+    NON_DESTRUCTIVE,
     async ({ userId, itemId }) => {
       try {
         await client.markPlayed(userId, itemId);
@@ -555,6 +563,7 @@ export function registerUserDataTools(server: McpServer, client: JellyfinClient)
       userId: z.string().describe("User ID from jellyfin_list_users"),
       itemId: z.string().describe("Item ID from a search or recent-items result"),
     },
+    NON_DESTRUCTIVE,
     async ({ userId, itemId }) => {
       try {
         await client.markUnplayed(userId, itemId);
@@ -572,6 +581,7 @@ export function registerUserDataTools(server: McpServer, client: JellyfinClient)
       userId: z.string().describe("User ID from jellyfin_list_users"),
       itemId: z.string().describe("Item ID from a search or recent-items result"),
     },
+    NON_DESTRUCTIVE,
     async ({ userId, itemId }) => {
       try {
         await client.setFavorite(userId, itemId);
@@ -589,6 +599,7 @@ export function registerUserDataTools(server: McpServer, client: JellyfinClient)
       userId: z.string().describe("User ID from jellyfin_list_users"),
       itemId: z.string().describe("Item ID from a search or recent-items result"),
     },
+    NON_DESTRUCTIVE,
     async ({ userId, itemId }) => {
       try {
         await client.unsetFavorite(userId, itemId);

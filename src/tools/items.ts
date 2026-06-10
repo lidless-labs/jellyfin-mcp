@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { JellyfinClient } from "../client.js";
-import { ok, fail } from "./_util.js";
+import { ok, fail, READ_ONLY } from "./_util.js";
 
 const VALID_ITEM_TYPES = [
   "Movie",
@@ -29,6 +29,7 @@ export function registerItemTools(server: McpServer, client: JellyfinClient): vo
         ),
       limit: z.number().int().positive().max(200).optional().default(20),
     },
+    READ_ONLY,
     async ({ query, itemTypes, limit }) => {
       try {
         const results = await client.searchItems(query, itemTypes, limit);
@@ -57,6 +58,7 @@ export function registerItemTools(server: McpServer, client: JellyfinClient): vo
         .describe("User ID to compute 'latest' for (Jellyfin requires this). Use an admin ID to see everything."),
       limit: z.number().int().positive().max(100).optional().default(20),
     },
+    READ_ONLY,
     async ({ userId, limit }) => {
       try {
         const items = await client.getRecentItems(userId, limit);
@@ -82,6 +84,7 @@ export function registerItemTools(server: McpServer, client: JellyfinClient): vo
     {
       itemId: z.string().describe("Item ID from a search or recent-items result"),
     },
+    READ_ONLY,
     async ({ itemId }) => {
       try {
         const item = await client.getItem(itemId);

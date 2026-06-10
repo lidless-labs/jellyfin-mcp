@@ -1,13 +1,14 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { JellyfinClient } from "../client.js";
-import { ok, fail, refuseUnconfirmed } from "./_util.js";
+import { ok, fail, refuseUnconfirmed, DESTRUCTIVE, NON_DESTRUCTIVE, READ_ONLY } from "./_util.js";
 
 export function registerUserTools(server: McpServer, client: JellyfinClient): void {
   server.tool(
     "jellyfin_list_users",
     "List all Jellyfin users with admin/disabled status and last login/activity timestamps.",
     {},
+    READ_ONLY,
     async () => {
       try {
         const users = await client.listUsers();
@@ -33,6 +34,7 @@ export function registerUserTools(server: McpServer, client: JellyfinClient): vo
     {
       name: z.string().min(1).describe("Username for the new account"),
     },
+    NON_DESTRUCTIVE,
     async ({ name }) => {
       try {
         const user = await client.createUser(name);
@@ -57,6 +59,7 @@ export function registerUserTools(server: McpServer, client: JellyfinClient): vo
         .optional()
         .describe("Must be true. Required acknowledgement that the account will be permanently deleted."),
     },
+    DESTRUCTIVE,
     async ({ userId, confirm }) => {
       if (!confirm) return refuseUnconfirmed(`delete user ${userId}`);
       try {
@@ -75,6 +78,7 @@ export function registerUserTools(server: McpServer, client: JellyfinClient): vo
       userId: z.string().describe("User ID from jellyfin_list_users"),
       disabled: z.boolean().describe("true to disable, false to re-enable"),
     },
+    DESTRUCTIVE,
     async ({ userId, disabled }) => {
       try {
         await client.setUserDisabled(userId, disabled);
@@ -98,6 +102,7 @@ export function registerUserTools(server: McpServer, client: JellyfinClient): vo
         .optional()
         .describe("Must be true. Required acknowledgement that the existing password will be replaced."),
     },
+    DESTRUCTIVE,
     async ({ userId, newPassword, confirm }) => {
       if (!confirm) return refuseUnconfirmed(`change the password for user ${userId}`);
       try {

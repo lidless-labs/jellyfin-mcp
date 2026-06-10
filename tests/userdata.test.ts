@@ -4,6 +4,7 @@ import type { JellyfinClient } from "../src/client.js";
 
 interface CapturedTool {
   name: string;
+  annotations: { readOnlyHint?: boolean; destructiveHint?: boolean };
   handler: (args: Record<string, unknown>) => Promise<{
     content: { type: string; text: string }[];
     isError?: boolean;
@@ -17,9 +18,10 @@ function makeFakeServer(): { server: unknown; tools: Map<string, CapturedTool> }
       name: string,
       _description: string,
       _schema: unknown,
+      annotations: CapturedTool["annotations"],
       handler: CapturedTool["handler"],
     ) => {
-      tools.set(name, { name, handler });
+      tools.set(name, { name, annotations, handler });
     },
   };
   return { server, tools };
