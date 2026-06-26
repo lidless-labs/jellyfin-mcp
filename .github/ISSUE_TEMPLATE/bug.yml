@@ -1,0 +1,67 @@
+name: Bug report
+description: A tool returns the wrong result, errors, or behaves unexpectedly against your Jellyfin server.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: Which tool did you (or the model) call, with what arguments, and what did you expect versus what you got?
+      placeholder: |
+        I asked the agent to pause the living room session. It called
+        `jellyfin_pause_session` with sessionId X and returned an error / no effect.
+        I expected the session to pause.
+    validations:
+      required: true
+  - type: input
+    id: tool
+    attributes:
+      label: Tool name
+      description: The `jellyfin_*` tool involved, if known.
+      placeholder: jellyfin_pause_session
+    validations:
+      required: false
+  - type: input
+    id: version
+    attributes:
+      label: jellyfin-mcp version
+      description: From `npm view jellyfin-mcp version` or the version you have installed.
+      placeholder: 0.4.0
+    validations:
+      required: true
+  - type: input
+    id: jellyfin-version
+    attributes:
+      label: Jellyfin server version
+      placeholder: 10.10.3
+    validations:
+      required: true
+  - type: input
+    id: client
+    attributes:
+      label: MCP client
+      placeholder: Claude Desktop, Claude Code, Codex CLI, OpenClaw, etc.
+    validations:
+      required: true
+  - type: input
+    id: node
+    attributes:
+      label: Node.js version
+      placeholder: 20.x, 22.x
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / output
+      description: Paste relevant stderr from the MCP server and the tool result. Redact your API key, real hostnames, and IPs.
+      render: shell
+    validations:
+      required: false
+  - type: checkboxes
+    id: scrub
+    attributes:
+      label: Pre-flight
+      options:
+        - label: I have removed my `JELLYFIN_API_KEY`, private hostnames, and real IPs from this report.
+          required: true
