@@ -1,0 +1,49 @@
+name: Feature request
+description: Suggest a new Jellyfin tool, a new argument, or an improvement to an existing tool.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do
+      description: Describe the task or prompt you want to run, and why the current tools fall short.
+      placeholder: |
+        I want to ask the agent to "trim my Continue Watching to the last 5 items",
+        but there is no tool that limits by count.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed tool or change
+      description: If you have a shape in mind, sketch the tool name, inputs, and whether it is read-only or destructive.
+      placeholder: |
+        jellyfin_trim_continue_watching(userId, keep: number, confirm: true)
+        Destructive: clears resume entries beyond the most recent `keep`.
+    validations:
+      required: false
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Operation kind
+      options:
+        - Read-only (query / report)
+        - Destructive or privileged (would need a confirm gate)
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: jellyfin-endpoint
+    attributes:
+      label: Relevant Jellyfin API endpoint
+      description: If you know which Jellyfin endpoint backs this, link or name it.
+      placeholder: POST /UserItems/Resume
+    validations:
+      required: false
+  - type: checkboxes
+    id: scrub
+    attributes:
+      label: Pre-flight
+      options:
+        - label: This is about jellyfin-mcp's tool surface, not a Jellyfin server feature request (those go to the Jellyfin project).
+          required: true

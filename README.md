@@ -4,19 +4,34 @@
 
 <h1 align="center">jellyfin-mcp</h1>
 
-<p align="center"><em>Speak to your Jellyfin server in tool calls.</em></p>
+<p align="center"><strong>Speak to your Jellyfin server in tool calls.</strong></p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/v/release/solomonneas/jellyfin-mcp?label=release&color=2563EB&style=for-the-badge" alt="GitHub release" />
-  <img src="https://img.shields.io/badge/TypeScript-6.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript 6.0" />
-  <img src="https://img.shields.io/badge/Node.js-20%2B-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js 20+" />
+  <a href="https://www.npmjs.com/package/jellyfin-mcp"><img src="https://img.shields.io/npm/v/jellyfin-mcp?style=for-the-badge&label=npm&color=CB3837&logo=npm&logoColor=white" alt="npm version" /></a>
+  <a href="https://github.com/solomonneas/jellyfin-mcp/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/solomonneas/jellyfin-mcp/ci.yml?branch=main&style=for-the-badge&label=ci" alt="CI status" /></a>
   <img src="https://img.shields.io/badge/MCP-1.x-7C3AED?style=for-the-badge" alt="MCP 1.x" />
-  <img src="https://img.shields.io/badge/License-MIT-2EA043?style=for-the-badge" alt="MIT License" />
+  <a href="https://github.com/solomonneas/jellyfin-mcp/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-2EA043?style=for-the-badge" alt="MIT License" /></a>
 </p>
 
-An MCP (Model Context Protocol) server for [Jellyfin](https://jellyfin.org). Exposes Jellyfin's management and playback control surface to LLMs: list who's watching what, pause a session, scan a library, run a scheduled task, or message a client, all as typed tool calls.
+<p align="center">
+  <a href="https://lidless.dev/jellyfin-mcp"><strong>Website</strong></a>
+  &nbsp;&middot;&nbsp;
+  <a href="https://www.npmjs.com/package/jellyfin-mcp">npm</a>
+  &nbsp;&middot;&nbsp;
+  <a href="#install">Install</a>
+  &nbsp;&middot;&nbsp;
+  <a href="#tools">Tools</a>
+</p>
+
+jellyfin-mcp is a Model Context Protocol (MCP) server for [Jellyfin](https://jellyfin.org), the free self-hosted media server, so an AI client can read and control your library, sessions, and users as typed tool calls. You want it because asking "what's playing in the living room, pause it" or "scan the Movies library" is faster than clicking through the Jellyfin dashboard, and because an agent can chain those steps. It differs from a generic HTTP tool or a hand-written script by exposing 56 schema-validated tools with `confirm: true` gates on every destructive operation and MCP annotations that let clients route those calls to human approval.
+
+> **Status: WIP.** Used daily against a real Jellyfin server, but the tool surface is still settling and breaking changes can land between minor versions. Pin a released version if you need stability.
 
 Companion to [arr-cli](https://github.com/solomonneas/arr-cli) (the *arr stack CLI). arr-cli handles acquiring content; jellyfin-mcp handles serving, monitoring, and controlling playback.
+
+## What it does
+
+Jellyfin is a free, self-hosted media server: your movies, shows, music, and photos on hardware you control. jellyfin-mcp puts that media server's management surface in front of any MCP-compatible LLM client. Through the Model Context Protocol it exposes 56 typed tools so an AI agent can list who is watching what, pause or cast a session, scan a library, manage users, prune Continue Watching, run a scheduled task, or message a client, all as structured tool calls instead of raw REST. It is read-and-write: discovery and reporting tools are read-only, while every destructive or privileged operation is gated behind an explicit `confirm: true` flag and a `destructiveHint` annotation.
 
 ## Features
 
@@ -110,6 +125,27 @@ Companion to [arr-cli](https://github.com/solomonneas/arr-cli) (the *arr stack C
 - `jellyfin_list_scheduled_tasks`
 - `jellyfin_run_scheduled_task`
 - `jellyfin_get_activity_log`
+
+## Quickstart
+
+Add this to your MCP client config. No global install needed; `npx` fetches and runs the published `jellyfin-mcp` package:
+
+```json
+{
+  "mcpServers": {
+    "jellyfin": {
+      "command": "npx",
+      "args": ["-y", "jellyfin-mcp"],
+      "env": {
+        "JELLYFIN_URL": "http://192.0.2.10:8096",
+        "JELLYFIN_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}
+```
+
+Then ask your agent: *"What's playing on Jellyfin right now?"* It will call `jellyfin_list_sessions` and report back.
 
 ## Install
 
@@ -326,6 +362,19 @@ Calls `jellyfin_get_next_up` with the user's ID, optionally narrowed with `serie
 
 Calls `jellyfin_list_users` to resolve the target user, then `jellyfin_quick_connect_authorize` with `code`, `userId`, and `confirm: true`.
 
+## Why not alternatives?
+
+- **Why not just call the Jellyfin REST API from a generic HTTP tool?** You can, but then the model has to know the endpoint shapes, build query strings, and handle pagination and IDs by hand on every call. jellyfin-mcp wraps the useful operations as 56 named, schema-validated tools with descriptions, so the model picks `jellyfin_pause_session` instead of guessing at `POST /Sessions/{id}/Playing/Pause`. It also redacts upstream error bodies and Quick Connect codes before they reach the model.
+- **Why not a shell script or a few curl aliases?** A script works for one fixed task. An MCP server lets the agent compose steps it was not pre-programmed for ("find the living room session, see what's playing, pause it, then message my partner") and reuse the same tools across Claude Desktop, Claude Code, Codex CLI, OpenClaw, and any other MCP client.
+- **Why not the Jellyfin web dashboard?** The dashboard is for a human clicking. jellyfin-mcp is for an agent acting on your behalf in natural language, and for chaining media-server actions into larger workflows alongside other MCP servers.
+
+## What jellyfin-mcp is not
+
+- **Not a Jellyfin client or player.** It does not stream, transcode, or render media. It controls and queries an existing Jellyfin server over HTTP; playback happens on your real Jellyfin clients.
+- **Not a content acquisition tool.** Downloading, importing, or organizing files is out of scope. Pair it with [arr-cli](https://github.com/solomonneas/arr-cli) for the acquisition side.
+- **Not a security boundary on its own.** The `confirm: true` gates and MCP `destructiveHint` annotations help clients route risky calls to human approval, but anyone who can reach this server with a valid `JELLYFIN_API_KEY` can act as that key allows. Scope the API key and keep `JELLYFIN_VERIFY_SSL` at its secure default.
+- **Not a hosted service.** There is no SaaS, no telemetry, and no network egress beyond the calls to the Jellyfin server you configure. It runs locally as a stdio MCP server.
+
 ## Development
 
 ```bash
@@ -335,6 +384,10 @@ npm run typecheck # tsc --noEmit
 npm run build     # tsup bundle
 npm test          # vitest
 ```
+
+## Contributing
+
+Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for how the tools are structured and what lands easily, [SECURITY.md](SECURITY.md) for reporting vulnerabilities privately, and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for the ground rules.
 
 ## License
 

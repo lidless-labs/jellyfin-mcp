@@ -5,6 +5,21 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Maintainer health files: `SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`,
+  GitHub issue templates (bug, feature, blank-issues-disabled config), and a
+  pull request template with a no-PII / content-guard checklist.
+
+### Changed
+
+- README rewritten to the adoption-upgrade standard: a what / why / how-it-differs
+  lead, an npm version and CI badge, a prominent Website link, a copyable
+  `npx -y jellyfin-mcp` MCP client config, a keyword-rich "What it does" section,
+  and "Why not alternatives?" and "What jellyfin-mcp is not" sections.
+
 ## [0.4.0] - 2026-06-10
 
 ### Added
@@ -87,6 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial scaffold: 20 MCP tools for Jellyfin covering system info,
   libraries, users, sessions, items, scheduled tasks, and activity log.
 
+[Unreleased]: https://github.com/solomonneas/jellyfin-mcp/compare/v0.4.0...HEAD
 [0.4.0]: https://github.com/solomonneas/jellyfin-mcp/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/solomonneas/jellyfin-mcp/releases/tag/v0.3.0
 [0.2.0]: https://github.com/solomonneas/jellyfin-mcp/commits/9ea3acd
