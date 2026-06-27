@@ -1,17 +1,10 @@
 <p align="center">
-  <img src="assets/jellyfin-mcp-banner.jpg" alt="jellyfin-mcp banner" />
+  <img src="docs/assets/jellyfin-mcp-banner.jpg" alt="jellyfin-mcp banner" width="900">
 </p>
 
 <h1 align="center">jellyfin-mcp</h1>
 
 <p align="center"><strong>Speak to your Jellyfin server in tool calls.</strong></p>
-
-<p align="center">
-  <a href="https://www.npmjs.com/package/jellyfin-mcp"><img src="https://img.shields.io/npm/v/jellyfin-mcp?style=for-the-badge&label=npm&color=CB3837&logo=npm&logoColor=white" alt="npm version" /></a>
-  <a href="https://github.com/solomonneas/jellyfin-mcp/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/solomonneas/jellyfin-mcp/ci.yml?branch=main&style=for-the-badge&label=ci" alt="CI status" /></a>
-  <img src="https://img.shields.io/badge/MCP-1.x-7C3AED?style=for-the-badge" alt="MCP 1.x" />
-  <a href="https://github.com/solomonneas/jellyfin-mcp/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-2EA043?style=for-the-badge" alt="MIT License" /></a>
-</p>
 
 <p align="center">
   <a href="https://lidless.dev/jellyfin-mcp"><strong>Website</strong></a>
@@ -23,31 +16,58 @@
   <a href="#tools">Tools</a>
 </p>
 
+<p align="center">
+  <img src="https://img.shields.io/npm/v/jellyfin-mcp?style=for-the-badge&logo=npm&label=npm" alt="npm version">
+  <img src="https://img.shields.io/github/actions/workflow/status/lidless-labs/jellyfin-mcp/ci.yml?branch=main&style=for-the-badge&label=ci" alt="CI status">
+  <img src="https://img.shields.io/badge/MCP-server-8A2BE2?style=for-the-badge" alt="MCP server">
+  <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="MIT License">
+</p>
+
 jellyfin-mcp is a Model Context Protocol (MCP) server for [Jellyfin](https://jellyfin.org), the free self-hosted media server, so an AI client can read and control your library, sessions, and users as typed tool calls. You want it because asking "what's playing in the living room, pause it" or "scan the Movies library" is faster than clicking through the Jellyfin dashboard, and because an agent can chain those steps. It differs from a generic HTTP tool or a hand-written script by exposing 56 schema-validated tools with `confirm: true` gates on every destructive operation and MCP annotations that let clients route those calls to human approval.
 
 > **Status: WIP.** Used daily against a real Jellyfin server, but the tool surface is still settling and breaking changes can land between minor versions. Pin a released version if you need stability.
 
-Companion to [arr-cli](https://github.com/solomonneas/arr-cli) (the *arr stack CLI). arr-cli handles acquiring content; jellyfin-mcp handles serving, monitoring, and controlling playback.
+Companion to [arr-cli](https://github.com/lidless-labs/arr-cli) (the *arr stack CLI). arr-cli handles acquiring content; jellyfin-mcp handles serving, monitoring, and controlling playback.
 
 ## What it does
 
 Jellyfin is a free, self-hosted media server: your movies, shows, music, and photos on hardware you control. jellyfin-mcp puts that media server's management surface in front of any MCP-compatible LLM client. Through the Model Context Protocol it exposes 56 typed tools so an AI agent can list who is watching what, pause or cast a session, scan a library, manage users, prune Continue Watching, run a scheduled task, or message a client, all as structured tool calls instead of raw REST. It is read-and-write: discovery and reporting tools are read-only, while every destructive or privileged operation is gated behind an explicit `confirm: true` flag and a `destructiveHint` annotation.
 
-## Features
+## Install
 
-- **56 MCP tools** covering system info, libraries, users, sessions, items, scheduled tasks, user data writes, playlists, collections, discovery, and Quick Connect
-- Playback control: pause / resume / stop / seek / next / previous / volume / mute / audio-stream / subtitle-stream / cast (remote-play) / send-message / bulk session controls
-- User data writes: mark watched/unwatched, add/remove favorites, preview or clear Continue Watching resume positions, set resume position
-- Playlists: create, list, append, remove entries
-- Collections: create, add, remove
-- Discovery: resume queue, next-up episodes, similar items
-- Quick Connect: check status, authorize a pending code for a user
-- Library scan triggering (per-library or all)
-- User admin: list, create, delete, enable/disable, reset password
-- Activity log queries for recent events
-- Destructive / privileged ops (`restart`, `shutdown`, `delete_user`, `set_user_password`, `quick_connect_authorize`, `jellyfin_clear_continue_watching`, bulk session controls, resume-position writes) require explicit `confirm: true`
-- Upstream Jellyfin error responses are summarized (status only) before being returned to the client; the full response body is logged to stderr for operators, so internal server detail is not surfaced to the model
-- Works with Claude Desktop, Claude Code, OpenClaw, Hermes Agent, Codex CLI, and any MCP-compatible client
+```bash
+npm install -g jellyfin-mcp
+```
+
+Or from source:
+
+```bash
+git clone https://github.com/lidless-labs/jellyfin-mcp.git
+cd jellyfin-mcp
+npm install
+npm run build
+```
+
+## Quickstart
+
+Add this to your MCP client config. No global install needed; `npx` fetches and runs the published `jellyfin-mcp` package:
+
+```json
+{
+  "mcpServers": {
+    "jellyfin": {
+      "command": "npx",
+      "args": ["-y", "jellyfin-mcp"],
+      "env": {
+        "JELLYFIN_URL": "http://192.0.2.10:8096",
+        "JELLYFIN_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}
+```
+
+Then ask your agent: *"What's playing on Jellyfin right now?"* It will call `jellyfin_list_sessions` and report back.
 
 ## Tools
 
@@ -125,42 +145,6 @@ Jellyfin is a free, self-hosted media server: your movies, shows, music, and pho
 - `jellyfin_list_scheduled_tasks`
 - `jellyfin_run_scheduled_task`
 - `jellyfin_get_activity_log`
-
-## Quickstart
-
-Add this to your MCP client config. No global install needed; `npx` fetches and runs the published `jellyfin-mcp` package:
-
-```json
-{
-  "mcpServers": {
-    "jellyfin": {
-      "command": "npx",
-      "args": ["-y", "jellyfin-mcp"],
-      "env": {
-        "JELLYFIN_URL": "http://192.0.2.10:8096",
-        "JELLYFIN_API_KEY": "your-api-key-here"
-      }
-    }
-  }
-}
-```
-
-Then ask your agent: *"What's playing on Jellyfin right now?"* It will call `jellyfin_list_sessions` and report back.
-
-## Install
-
-```bash
-npm install -g jellyfin-mcp
-```
-
-Or from source:
-
-```bash
-git clone https://github.com/solomonneas/jellyfin-mcp.git
-cd jellyfin-mcp
-npm install
-npm run build
-```
 
 ## Configuration
 
@@ -312,6 +296,22 @@ ssh -N -L 8096:localhost:8096 mediaserver
 
 Then point `JELLYFIN_URL` at `http://localhost:8096`. The MCP itself has no SSH logic, it just talks HTTP.
 
+## Features
+
+- **56 MCP tools** covering system info, libraries, users, sessions, items, scheduled tasks, user data writes, playlists, collections, discovery, and Quick Connect
+- Playback control: pause / resume / stop / seek / next / previous / volume / mute / audio-stream / subtitle-stream / cast (remote-play) / send-message / bulk session controls
+- User data writes: mark watched/unwatched, add/remove favorites, preview or clear Continue Watching resume positions, set resume position
+- Playlists: create, list, append, remove entries
+- Collections: create, add, remove
+- Discovery: resume queue, next-up episodes, similar items
+- Quick Connect: check status, authorize a pending code for a user
+- Library scan triggering (per-library or all)
+- User admin: list, create, delete, enable/disable, reset password
+- Activity log queries for recent events
+- Destructive / privileged ops (`restart`, `shutdown`, `delete_user`, `set_user_password`, `quick_connect_authorize`, `jellyfin_clear_continue_watching`, bulk session controls, resume-position writes) require explicit `confirm: true`
+- Upstream Jellyfin error responses are summarized (status only) before being returned to the client; the full response body is logged to stderr for operators, so internal server detail is not surfaced to the model
+- Works with Claude Desktop, Claude Code, OpenClaw, Hermes Agent, Codex CLI, and any MCP-compatible client
+
 ## Example Prompts
 
 > What's actively playing on Jellyfin right now?
@@ -371,7 +371,7 @@ Calls `jellyfin_list_users` to resolve the target user, then `jellyfin_quick_con
 ## What jellyfin-mcp is not
 
 - **Not a Jellyfin client or player.** It does not stream, transcode, or render media. It controls and queries an existing Jellyfin server over HTTP; playback happens on your real Jellyfin clients.
-- **Not a content acquisition tool.** Downloading, importing, or organizing files is out of scope. Pair it with [arr-cli](https://github.com/solomonneas/arr-cli) for the acquisition side.
+- **Not a content acquisition tool.** Downloading, importing, or organizing files is out of scope. Pair it with [arr-cli](https://github.com/lidless-labs/arr-cli) for the acquisition side.
 - **Not a security boundary on its own.** The `confirm: true` gates and MCP `destructiveHint` annotations help clients route risky calls to human approval, but anyone who can reach this server with a valid `JELLYFIN_API_KEY` can act as that key allows. Scope the API key and keep `JELLYFIN_VERIFY_SSL` at its secure default.
 - **Not a hosted service.** There is no SaaS, no telemetry, and no network egress beyond the calls to the Jellyfin server you configure. It runs locally as a stdio MCP server.
 
