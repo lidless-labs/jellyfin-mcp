@@ -1,4 +1,6 @@
 import { createRequire } from "node:module";
+import { realpathSync } from "node:fs";
+import { pathToFileURL } from "node:url";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { getConfig } from "./config.js";
@@ -22,7 +24,10 @@ import { registerQuickConnectTools } from "./tools/quickconnect.js";
 const nodeRequire = createRequire(import.meta.url);
 const pkg = nodeRequire("../package.json") as { name: string; version: string };
 
-async function main(): Promise<void> {
+// Build and connect the MCP server over stdio. Exported so the CLI (`jellyctl
+// mcp`) and the dedicated server bin (mcp-bin.ts) share one identical startup
+// path, and so the OpenClaw plugin entry that imports this module can drive it.
+export async function startServer(): Promise<void> {
   const config = getConfig();
 
   // TLS verification skipping (when JELLYFIN_VERIFY_SSL=false) is scoped to the
@@ -70,8 +75,25 @@ async function main(): Promise<void> {
   await server.connect(transport);
 }
 
-main().catch((error: unknown) => {
-  const msg = error instanceof Error ? error.message : String(error);
-  console.error(`jellyfin-mcp fatal: ${msg}`);
-  process.exit(1);
-});
+// True when this module is the process entrypoint. process.argv[1] is often a
+// symlink (npm installs the bin as a link); resolve it before comparing. This
+// keeps the historical `jellyfin-mcp` bin -> dist/index.js behavior: running
+// the file directly starts the server, but importing it (CLI, tests, plugin
+// host) does not.
+const isEntrypoint = (() => {
+  const arg = process.argv[1];
+  if (typeof arg !== "string") return false;
+  try {
+    return import.meta.url === pathToFileURL(realpathSync(arg)).href;
+  } catch {
+    return false;
+  }
+})();
+
+if (isEntrypoint) {
+  startServer().catch((error: unknown) => {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error(`jellyfin-mcp fatal: ${msg}`);
+    process.exit(1);
+  });
+}
