@@ -146,6 +146,46 @@ Then ask your agent: *"What's playing on Jellyfin right now?"* It will call `jel
 - `jellyfin_run_scheduled_task`
 - `jellyfin_get_activity_log`
 
+## CLI
+
+The same package ships a read-only control CLI, `jellyctl`, for shells, cron, and CI. It shares the `JellyfinClient` core with the MCP server and reads the same env config. It exposes only the read/report/lookup tools; every playback-control, user-management, library-scan, and other write operation stays in the MCP surface behind the `confirm: true` gates.
+
+```bash
+npx jellyfin-mcp@latest status
+# or, installed globally:
+jellyctl status                                  # server info; exit 1 if unreachable
+jellyctl libraries
+jellyctl users
+jellyctl sessions --active-only
+jellyctl search "blade runner" --type Movie --limit 5
+jellyctl item 6e0b...                            # full metadata for one item
+jellyctl recent --user 3f1c... --limit 10
+jellyctl resume --user 3f1c...                   # Continue Watching, with resume position
+jellyctl next-up --user 3f1c... --series 9a2d...
+jellyctl similar 6e0b... --user 3f1c...
+jellyctl history --user 3f1c... --type Movie,Episode
+jellyctl user-data --user 3f1c... --item 6e0b...
+jellyctl activity --limit 50
+jellyctl tasks
+jellyctl playlists --user 3f1c...
+jellyctl playlist 4c7e... --user 3f1c...
+jellyctl status --json                           # raw JSON for piping
+```
+
+Run `jellyctl help` for the full command and flag list. `--json` emits raw JSON instead of the concise human-readable summary. The CLI reads `JELLYFIN_URL`, `JELLYFIN_API_KEY`, `JELLYFIN_TIMEOUT`, and `JELLYFIN_VERIFY_SSL` (see [Configuration](#configuration)); for example:
+
+```bash
+export JELLYFIN_URL=http://192.0.2.10:8096
+export JELLYFIN_API_KEY=your-api-key-here
+jellyctl status
+```
+
+Exit codes: `0` success, `1` runtime error (backend unreachable / call failed, and `status` when the server reports no version), `2` usage error (unknown command/flag or bad value).
+
+### Starting the MCP server
+
+`jellyctl mcp` (or the `jellyfin-mcp` bin) starts the stdio MCP server. Launchers that reference the file path `dist/index.js` directly keep working; new launchers can point at `dist/mcp-bin.js` (or `dist/cli.js mcp`). Launchers that use the `jellyfin-mcp` bin name need no change.
+
 ## Configuration
 
 Set these environment variables in your MCP client config:
