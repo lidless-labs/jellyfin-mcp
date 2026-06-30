@@ -1,7 +1,7 @@
 {
   "name": "jellyfin-mcp",
   "version": "0.4.0",
-  "description": "MCP server for Jellyfin media server: control sessions, scan libraries, manage users, query content, manage resume state, and run scheduled tasks via LLM tool calls",
+  "description": "jellyctl operator CLI for Jellyfin with a compatible MCP adapter for typed tool calls",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
@@ -30,6 +30,8 @@
   },
   "keywords": [
     "mcp",
+    "cli",
+    "jellyctl",
     "jellyfin",
     "media-server",
     "model-context-protocol",
