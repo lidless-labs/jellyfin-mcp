@@ -4,7 +4,7 @@ contact_links:
     url: https://lidless.dev/jellyfin-mcp
     about: Overview, tool list, and setup for jellyfin-mcp.
   - name: Security report
-    url: https://github.com/lidless-labs/jellyctl/security/policy
+    url: https://github.com/lidless-labs/jellyctrl/security/policy
     about: Do not file security issues publicly. See SECURITY.md.
   - name: Jellyfin server issues
     url: https://github.com/jellyfin/jellyfin/issues

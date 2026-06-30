@@ -48,10 +48,10 @@ export type Parsed =
   | { kind: "playlists"; json: boolean; userId: string }
   | { kind: "playlist"; json: boolean; playlistId: string; userId: string };
 
-export const HELP = `jellyctl - read-only control CLI for a Jellyfin media server
+export const HELP = `jellyctrl - read-only control CLI for a Jellyfin media server
 
 Usage:
-  jellyctl <command> [options]
+  jellyctrl <command> [options]
 
 Server:
   status                     Server info (name, version, OS, pending restart)  [exit 1 if unreachable]

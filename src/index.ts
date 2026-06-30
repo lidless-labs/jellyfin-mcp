@@ -24,7 +24,7 @@ import { registerQuickConnectTools } from "./tools/quickconnect.js";
 const nodeRequire = createRequire(import.meta.url);
 const pkg = nodeRequire("../package.json") as { name: string; version: string };
 
-// Build and connect the MCP server over stdio. Exported so the CLI (`jellyctl
+// Build and connect the MCP server over stdio. Exported so the CLI (`jellyctrl
 // mcp`) and the dedicated server bin (mcp-bin.ts) share one identical startup
 // path, and so the OpenClaw plugin entry that imports this module can drive it.
 export async function startServer(): Promise<void> {

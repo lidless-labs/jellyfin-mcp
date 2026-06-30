@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="docs/assets/jellyctl-banner.jpg" alt="jellyctl banner" width="900">
+  <img src="docs/assets/jellyctrl-banner.jpg" alt="jellyctrl banner" width="900">
 </p>
 
-<h1 align="center">jellyctl</h1>
+<h1 align="center">jellyctrl</h1>
 
 <p align="center"><strong>Operator control CLI for Jellyfin, with MCP compatibility built in.</strong></p>
 
@@ -20,24 +20,24 @@
 
 <p align="center">
   <img src="https://img.shields.io/npm/v/jellyfin-mcp?style=for-the-badge&logo=npm&label=npm" alt="npm version">
-  <img src="https://img.shields.io/github/actions/workflow/status/lidless-labs/jellyctl/ci.yml?branch=main&style=for-the-badge&label=ci" alt="CI status">
+  <img src="https://img.shields.io/github/actions/workflow/status/lidless-labs/jellyctrl/ci.yml?branch=main&style=for-the-badge&label=ci" alt="CI status">
   <img src="https://img.shields.io/badge/MCP-server-8A2BE2?style=for-the-badge" alt="MCP server">
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="MIT License">
 </p>
 
-jellyctl is an operator control CLI for [Jellyfin](https://jellyfin.org), the free self-hosted media server. It gives shells, cron, CI, and agents a typed command surface for inspecting and operating a Jellyfin server without clicking through the dashboard. The same npm package is still published as `jellyfin-mcp` for compatibility, and the MCP adapter remains available through both `jellyctl mcp` and the legacy `jellyfin-mcp` bin.
+jellyctrl is an operator control CLI for [Jellyfin](https://jellyfin.org), the free self-hosted media server. It gives shells, cron, CI, and agents a typed command surface for inspecting and operating a Jellyfin server without clicking through the dashboard. The same npm package is still published as `jellyfin-mcp` for compatibility, and the MCP adapter remains available through both `jellyctrl mcp` and the legacy `jellyfin-mcp` bin.
 
-You want it because asking "what's playing in the living room?" or running `jellyctl sessions --active-only` is faster than dashboard hopping, and because an agent can chain those steps when launched through MCP. Compared with a generic HTTP tool or hand-written script, the MCP adapter exposes 56 schema-validated tools with `confirm: true` gates on every destructive operation and annotations that let clients route those calls to human approval.
+You want it because asking "what's playing in the living room?" or running `jellyctrl sessions --active-only` is faster than dashboard hopping, and because an agent can chain those steps when launched through MCP. Compared with a generic HTTP tool or hand-written script, the MCP adapter exposes 56 schema-validated tools with `confirm: true` gates on every destructive operation and annotations that let clients route those calls to human approval.
 
 > **Status: WIP.** Used daily against a real Jellyfin server, but the tool surface is still settling and breaking changes can land between minor versions. Pin a released version if you need stability.
 
-Companion to [arr-cli](https://github.com/lidless-labs/arr-cli) (the *arr stack CLI). arr-cli handles acquiring content; jellyctl handles serving, monitoring, and Jellyfin operations.
+Companion to [arr-cli](https://github.com/lidless-labs/arr-cli) (the *arr stack CLI). arr-cli handles acquiring content; jellyctrl handles serving, monitoring, and Jellyfin operations.
 
 ## What it does
 
-Jellyfin is a free, self-hosted media server: your movies, shows, music, and photos on hardware you control. jellyctl puts that media server's management surface in front of operators first: list sessions, inspect libraries, query users, search items, review activity, and script routine checks from the command line.
+Jellyfin is a free, self-hosted media server: your movies, shows, music, and photos on hardware you control. jellyctrl puts that media server's management surface in front of operators first: list sessions, inspect libraries, query users, search items, review activity, and script routine checks from the command line.
 
-For MCP-compatible clients, `jellyctl mcp` exposes the same project as a stdio MCP server with 56 typed tools so an agent can list who is watching what, pause or cast a session, scan a library, manage users, prune Continue Watching, run a scheduled task, or message a client, all as structured tool calls instead of raw REST. The MCP surface is read-and-write: discovery and reporting tools are read-only, while every destructive or privileged operation is gated behind an explicit `confirm: true` flag and a `destructiveHint` annotation. The `jellyfin-mcp` command remains supported as a compatibility bin.
+For MCP-compatible clients, `jellyctrl mcp` exposes the same project as a stdio MCP server with 56 typed tools so an agent can list who is watching what, pause or cast a session, scan a library, manage users, prune Continue Watching, run a scheduled task, or message a client, all as structured tool calls instead of raw REST. The MCP surface is read-and-write: discovery and reporting tools are read-only, while every destructive or privileged operation is gated behind an explicit `confirm: true` flag and a `destructiveHint` annotation. The `jellyfin-mcp` command remains supported as a compatibility bin.
 
 ## Install
 
@@ -45,13 +45,13 @@ For MCP-compatible clients, `jellyctl mcp` exposes the same project as a stdio M
 npm install -g jellyfin-mcp
 ```
 
-This installs both `jellyctl` and the compatibility `jellyfin-mcp` MCP bin.
+This installs both `jellyctrl` and the compatibility `jellyfin-mcp` MCP bin.
 
 Or from source:
 
 ```bash
-git clone https://github.com/lidless-labs/jellyctl.git
-cd jellyctl
+git clone https://github.com/lidless-labs/jellyctrl.git
+cd jellyctrl
 npm install
 npm run build
 ```
@@ -63,11 +63,11 @@ Set your Jellyfin connection details, then run a CLI command:
 ```bash
 export JELLYFIN_URL=http://192.0.2.10:8096
 export JELLYFIN_API_KEY=your-api-key-here
-jellyctl status
-jellyctl sessions --active-only
+jellyctrl status
+jellyctrl sessions --active-only
 ```
 
-For MCP clients, start the adapter with `jellyctl mcp` or keep using the compatibility `jellyfin-mcp` bin. No global install is required for the MCP path; `npx` fetches and runs the published `jellyfin-mcp` package:
+For MCP clients, start the adapter with `jellyctrl mcp` or keep using the compatibility `jellyfin-mcp` bin. No global install is required for the MCP path; `npx` fetches and runs the published `jellyfin-mcp` package:
 
 ```json
 {
@@ -165,43 +165,43 @@ Then ask your agent: *"What's playing on Jellyfin right now?"* It will call `jel
 
 ## CLI
 
-`jellyctl` is the primary operator interface for shells, cron, and CI. It shares the `JellyfinClient` core with the MCP adapter and reads the same env config. The current CLI exposes the read/report/lookup commands; playback control, user management, library scans, and other write operations stay in the MCP surface behind the `confirm: true` gates.
+`jellyctrl` is the primary operator interface for shells, cron, and CI. It shares the `JellyfinClient` core with the MCP adapter and reads the same env config. The current CLI exposes the read/report/lookup commands; playback control, user management, library scans, and other write operations stay in the MCP surface behind the `confirm: true` gates.
 
 ```bash
 npx jellyfin-mcp@latest status
 # or, installed globally:
-jellyctl status                                  # server info; exit 1 if unreachable
-jellyctl libraries
-jellyctl users
-jellyctl sessions --active-only
-jellyctl search "blade runner" --type Movie --limit 5
-jellyctl item 6e0b...                            # full metadata for one item
-jellyctl recent --user 3f1c... --limit 10
-jellyctl resume --user 3f1c...                   # Continue Watching, with resume position
-jellyctl next-up --user 3f1c... --series 9a2d...
-jellyctl similar 6e0b... --user 3f1c...
-jellyctl history --user 3f1c... --type Movie,Episode
-jellyctl user-data --user 3f1c... --item 6e0b...
-jellyctl activity --limit 50
-jellyctl tasks
-jellyctl playlists --user 3f1c...
-jellyctl playlist 4c7e... --user 3f1c...
-jellyctl status --json                           # raw JSON for piping
+jellyctrl status                                  # server info; exit 1 if unreachable
+jellyctrl libraries
+jellyctrl users
+jellyctrl sessions --active-only
+jellyctrl search "blade runner" --type Movie --limit 5
+jellyctrl item 6e0b...                            # full metadata for one item
+jellyctrl recent --user 3f1c... --limit 10
+jellyctrl resume --user 3f1c...                   # Continue Watching, with resume position
+jellyctrl next-up --user 3f1c... --series 9a2d...
+jellyctrl similar 6e0b... --user 3f1c...
+jellyctrl history --user 3f1c... --type Movie,Episode
+jellyctrl user-data --user 3f1c... --item 6e0b...
+jellyctrl activity --limit 50
+jellyctrl tasks
+jellyctrl playlists --user 3f1c...
+jellyctrl playlist 4c7e... --user 3f1c...
+jellyctrl status --json                           # raw JSON for piping
 ```
 
-Run `jellyctl help` for the full command and flag list. `--json` emits raw JSON instead of the concise human-readable summary. The CLI reads `JELLYFIN_URL`, `JELLYFIN_API_KEY`, `JELLYFIN_TIMEOUT`, and `JELLYFIN_VERIFY_SSL` (see [Configuration](#configuration)); for example:
+Run `jellyctrl help` for the full command and flag list. `--json` emits raw JSON instead of the concise human-readable summary. The CLI reads `JELLYFIN_URL`, `JELLYFIN_API_KEY`, `JELLYFIN_TIMEOUT`, and `JELLYFIN_VERIFY_SSL` (see [Configuration](#configuration)); for example:
 
 ```bash
 export JELLYFIN_URL=http://192.0.2.10:8096
 export JELLYFIN_API_KEY=your-api-key-here
-jellyctl status
+jellyctrl status
 ```
 
 Exit codes: `0` success, `1` runtime error (backend unreachable / call failed, and `status` when the server reports no version), `2` usage error (unknown command/flag or bad value).
 
 ### Starting the MCP adapter
 
-`jellyctl mcp` starts the stdio MCP adapter. The compatibility `jellyfin-mcp` bin does the same thing and remains supported. Launchers that reference the file path `dist/index.js` directly keep working; new launchers can point at `dist/mcp-bin.js` (or `dist/cli.js mcp`). Launchers that use the `jellyfin-mcp` bin name need no change.
+`jellyctrl mcp` starts the stdio MCP adapter. The compatibility `jellyfin-mcp` bin does the same thing and remains supported. Launchers that reference the file path `dist/index.js` directly keep working; new launchers can point at `dist/mcp-bin.js` (or `dist/cli.js mcp`). Launchers that use the `jellyfin-mcp` bin name need no change.
 
 ## Configuration
 
@@ -355,8 +355,8 @@ Then point `JELLYFIN_URL` at `http://localhost:8096`. The MCP itself has no SSH 
 
 ## Features
 
-- `jellyctl` CLI for operator status, library, user, session, item, activity, task, playlist, history, and user-data checks
-- MCP adapter through `jellyctl mcp` and the compatibility `jellyfin-mcp` bin
+- `jellyctrl` CLI for operator status, library, user, session, item, activity, task, playlist, history, and user-data checks
+- MCP adapter through `jellyctrl mcp` and the compatibility `jellyfin-mcp` bin
 - **56 MCP tools** covering system info, libraries, users, sessions, items, scheduled tasks, user data writes, playlists, collections, discovery, and Quick Connect
 - Playback control: pause / resume / stop / seek / next / previous / volume / mute / audio-stream / subtitle-stream / cast (remote-play) / send-message / bulk session controls
 - User data writes: mark watched/unwatched, add/remove favorites, preview or clear Continue Watching resume positions, set resume position
@@ -423,11 +423,11 @@ Calls `jellyfin_list_users` to resolve the target user, then `jellyfin_quick_con
 
 ## Why not alternatives?
 
-- **Why not just call the Jellyfin REST API from a generic HTTP tool?** You can, but then the caller has to know the endpoint shapes, build query strings, and handle pagination and IDs by hand on every call. jellyctl wraps useful read and reporting operations as stable CLI commands, and its MCP adapter exposes 56 named, schema-validated tools with descriptions, so a model picks `jellyfin_pause_session` instead of guessing at `POST /Sessions/{id}/Playing/Pause`. It also redacts upstream error bodies and Quick Connect codes before they reach the model.
-- **Why not a shell script or a few curl aliases?** A script works for one fixed task. jellyctl gives operators a reusable command surface, while the MCP adapter lets an agent compose steps it was not pre-programmed for ("find the living room session, see what's playing, pause it, then message my partner") and reuse the same tools across Claude Desktop, Claude Code, Codex CLI, OpenClaw, and any other MCP client.
-- **Why not the Jellyfin web dashboard?** The dashboard is for a human clicking. jellyctl is for operators and agents acting through commands, natural language, and larger workflows alongside other tools.
+- **Why not just call the Jellyfin REST API from a generic HTTP tool?** You can, but then the caller has to know the endpoint shapes, build query strings, and handle pagination and IDs by hand on every call. jellyctrl wraps useful read and reporting operations as stable CLI commands, and its MCP adapter exposes 56 named, schema-validated tools with descriptions, so a model picks `jellyfin_pause_session` instead of guessing at `POST /Sessions/{id}/Playing/Pause`. It also redacts upstream error bodies and Quick Connect codes before they reach the model.
+- **Why not a shell script or a few curl aliases?** A script works for one fixed task. jellyctrl gives operators a reusable command surface, while the MCP adapter lets an agent compose steps it was not pre-programmed for ("find the living room session, see what's playing, pause it, then message my partner") and reuse the same tools across Claude Desktop, Claude Code, Codex CLI, OpenClaw, and any other MCP client.
+- **Why not the Jellyfin web dashboard?** The dashboard is for a human clicking. jellyctrl is for operators and agents acting through commands, natural language, and larger workflows alongside other tools.
 
-## What jellyctl is not
+## What jellyctrl is not
 
 - **Not a Jellyfin client or player.** It does not stream, transcode, or render media. It controls and queries an existing Jellyfin server over HTTP; playback happens on your real Jellyfin clients.
 - **Not a content acquisition tool.** Downloading, importing, or organizing files is out of scope. Pair it with [arr-cli](https://github.com/lidless-labs/arr-cli) for the acquisition side.

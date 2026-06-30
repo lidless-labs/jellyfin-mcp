@@ -102,8 +102,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial scaffold: 20 MCP tools for Jellyfin covering system info,
   libraries, users, sessions, items, scheduled tasks, and activity log.
 
-[Unreleased]: https://github.com/lidless-labs/jellyctl/compare/v0.4.0...HEAD
-[0.4.0]: https://github.com/lidless-labs/jellyctl/compare/v0.3.0...v0.4.0
-[0.3.0]: https://github.com/lidless-labs/jellyctl/releases/tag/v0.3.0
-[0.2.0]: https://github.com/lidless-labs/jellyctl/commits/9ea3acd
-[0.1.0]: https://github.com/lidless-labs/jellyctl/commits/4f62caa
+[Unreleased]: https://github.com/lidless-labs/jellyctrl/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/lidless-labs/jellyctrl/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/lidless-labs/jellyctrl/releases/tag/v0.3.0
+[0.2.0]: https://github.com/lidless-labs/jellyctrl/commits/9ea3acd
+[0.1.0]: https://github.com/lidless-labs/jellyctrl/commits/4f62caa
