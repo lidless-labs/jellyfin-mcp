@@ -20,7 +20,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/npm/v/jellyfin-mcp?style=for-the-badge&logo=npm&label=npm" alt="npm version">
-  <img src="https://img.shields.io/github/actions/workflow/status/lidless-labs/jellyfin-mcp/ci.yml?branch=main&style=for-the-badge&label=ci" alt="CI status">
+  <img src="https://img.shields.io/github/actions/workflow/status/lidless-labs/jellyctl/ci.yml?branch=main&style=for-the-badge&label=ci" alt="CI status">
   <img src="https://img.shields.io/badge/MCP-server-8A2BE2?style=for-the-badge" alt="MCP server">
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="MIT License">
 </p>
@@ -50,8 +50,8 @@ This installs both `jellyctl` and the compatibility `jellyfin-mcp` MCP bin.
 Or from source:
 
 ```bash
-git clone https://github.com/lidless-labs/jellyfin-mcp.git
-cd jellyfin-mcp
+git clone https://github.com/lidless-labs/jellyctl.git
+cd jellyctl
 npm install
 npm run build
 ```

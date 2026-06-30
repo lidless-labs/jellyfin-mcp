@@ -26,8 +26,8 @@ jellyfin-mcp is a Model Context Protocol server that exposes a [Jellyfin](https:
 ## Local dev
 
 ```bash
-git clone https://github.com/solomonneas/jellyfin-mcp.git
-cd jellyfin-mcp
+git clone https://github.com/lidless-labs/jellyctl.git
+cd jellyctl
 npm install
 npm run dev       # watch mode with tsx
 npm run typecheck # tsc --noEmit

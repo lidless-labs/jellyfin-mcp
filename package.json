@@ -22,11 +22,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/lidless-labs/jellyfin-mcp.git"
+    "url": "https://github.com/lidless-labs/jellyctl.git"
   },
-  "homepage": "https://github.com/lidless-labs/jellyfin-mcp#readme",
+  "homepage": "https://github.com/lidless-labs/jellyctl#readme",
   "bugs": {
-    "url": "https://github.com/lidless-labs/jellyfin-mcp/issues"
+    "url": "https://github.com/lidless-labs/jellyctl/issues"
   },
   "keywords": [
     "mcp",
