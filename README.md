@@ -19,10 +19,10 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/npm/v/jellyfin-mcp?style=for-the-badge&logo=npm&label=npm" alt="npm version">
-  <img src="https://img.shields.io/github/actions/workflow/status/lidless-labs/jellyctrl/ci.yml?branch=main&style=for-the-badge&label=ci" alt="CI status">
-  <img src="https://img.shields.io/badge/MCP-server-8A2BE2?style=for-the-badge" alt="MCP server">
-  <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="MIT License">
+  <img src="https://shieldcn.dev/npm/jellyfin-mcp.svg" alt="npm version">
+  <img src="https://shieldcn.dev/github/ci/lidless-labs/jellyctrl.svg?branch=main&workflow=ci.yml" alt="CI status">
+  <img src="https://shieldcn.dev/badge/MCP-server-8A2BE2.svg" alt="MCP server">
+  <img src="https://shieldcn.dev/badge/license-MIT-green.svg" alt="MIT License">
 </p>
 
 jellyctrl is an operator control CLI for [Jellyfin](https://jellyfin.org), the free self-hosted media server. It gives shells, cron, CI, and agents a typed command surface for inspecting and operating a Jellyfin server without clicking through the dashboard. The same npm package is still published as `jellyfin-mcp` for compatibility, and the MCP adapter remains available through both `jellyctrl mcp` and the legacy `jellyfin-mcp` bin.
